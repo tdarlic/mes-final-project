@@ -1,12 +1,13 @@
 /**
- * @file lv_demo_widgets.c
+ * @file lv_widgets.c
  *
  */
 
 /*********************
  *      INCLUDES
  *********************/
-#include "lv_demo.h"
+#include "lv_widgets.h"
+#include "../lvgl/lvgl.h"
 
 /*********************
  *      DEFINES
@@ -77,7 +78,7 @@ static uint32_t session_mobile = 1000;
  *   GLOBAL FUNCTIONS
  **********************/
 
-void lv_demo_widgets(void)
+void lv_widgets(void)
 {
     if(LV_HOR_RES <= 320) disp_size = DISP_SMALL;
     else if(LV_HOR_RES < 720) disp_size = DISP_MEDIUM;

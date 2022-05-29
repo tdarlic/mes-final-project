@@ -9,16 +9,16 @@
 */
 
 
+#include <lv_widgets.h>
 #include "stm32f4xx.h"
 #include "hal_stm_lvgl/stm32f429i_discovery.h"
 
 #include "lvgl/lvgl.h"
-#include "lvgl/examples/lv_examples.h"
+//#include "lvgl/examples/lv_examples.h"
 
 #include "hal_stm_lvgl/tft/tft.h"
 #include "hal_stm_lvgl/touchpad/touchpad.h"
 
-#include "lv_demo_widgets.h"
 
 static void SystemClock_Config(void);
 
@@ -43,7 +43,7 @@ int main(void)
 	tft_init();
 	touchpad_init();
 
-	lv_demo_widgets();
+	lv_widgets();
 
 	while (1)
 	{
