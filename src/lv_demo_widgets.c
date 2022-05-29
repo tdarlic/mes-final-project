@@ -33,8 +33,6 @@ static void shop_create(lv_obj_t * parent);
 static lv_obj_t * create_meter_box(lv_obj_t * parent, const char * title, const char * text1, const char * text2, const char * text3);
 static lv_obj_t * create_shop_item(lv_obj_t * parent, const void * img_src, const char * name, const char * category, const char * price);
 
-static void calendar_event_cb(lv_event_t * e);
-static void slider_event_cb(lv_event_t * e);
 static void chart_event_cb(lv_event_t * e);
 static void shop_chart_event_cb(lv_event_t * e);
 static void meter1_indic1_anim_cb(void * var, int32_t v);
@@ -49,8 +47,6 @@ static void meter3_anim_cb(void * var, int32_t v);
 static disp_size_t disp_size;
 
 static lv_obj_t * tv;
-static lv_obj_t * calendar;
-static lv_obj_t * calendar_header;
 static lv_style_t style_text_muted;
 static lv_style_t style_title;
 static lv_style_t style_icon;
@@ -169,63 +165,81 @@ void lv_demo_widgets(void)
 
 static void pressure_create(lv_obj_t * parent)
 {
-    /*Create the third panel*/
-    lv_obj_t * panel3 = lv_obj_create(parent);
-    lv_obj_t * panel3_title = lv_label_create(panel3);
-    lv_label_set_text(panel3_title, "Your skills");
-    lv_obj_add_style(panel3_title, &style_title, 0);
+    // Meter 3
 
-    lv_obj_t * experience_label = lv_label_create(panel3);
-    lv_label_set_text(experience_label, "Experience");
-    lv_obj_add_style(experience_label, &style_text_muted, 0);
+	lv_meter_scale_t * scale;
+	lv_meter_indicator_t *indic;
+	lv_anim_t a;
 
-    lv_obj_t * slider1 = lv_slider_create(panel3);
-    lv_obj_set_width(slider1, LV_PCT(95));
-    lv_obj_add_event_cb(slider1, slider_event_cb, LV_EVENT_ALL, NULL);
-    lv_obj_refresh_ext_draw_size(slider1);
+	lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_ROW_WRAP);
 
-    lv_obj_t * team_player_label = lv_label_create(panel3);
-    lv_label_set_text(team_player_label, "Team player");
-    lv_obj_add_style(team_player_label, &style_text_muted, 0);
+	meter3 = create_meter_box(parent, "Network Speed", "Low speed", "Normal Speed", "High Speed");
+	lv_obj_add_flag(lv_obj_get_parent(meter3), LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
 
-    lv_obj_t * sw1 = lv_switch_create(panel3);
+	/*Add a special circle to the needle's pivot*/
+	lv_obj_set_style_pad_hor(meter3, 10, 0);
+	lv_obj_set_style_size(meter3, 10, LV_PART_INDICATOR);
+	lv_obj_set_style_radius(meter3, LV_RADIUS_CIRCLE, LV_PART_INDICATOR);
+	lv_obj_set_style_bg_opa(meter3, LV_OPA_COVER, LV_PART_INDICATOR);
+	lv_obj_set_style_bg_color(meter3, lv_palette_darken(LV_PALETTE_GREY, 4), LV_PART_INDICATOR);
+	lv_obj_set_style_outline_color(meter3, lv_color_white(), LV_PART_INDICATOR);
+	lv_obj_set_style_outline_width(meter3, 3, LV_PART_INDICATOR);
+	lv_obj_set_style_text_color(meter3, lv_palette_darken(LV_PALETTE_GREY, 1), LV_PART_TICKS);
 
-    lv_obj_t * hard_working_label = lv_label_create(panel3);
-    lv_label_set_text(hard_working_label, "Hard-working");
-    lv_obj_add_style(hard_working_label, &style_text_muted, 0);
+	scale = lv_meter_add_scale(meter3);
+	lv_meter_set_scale_range(meter3, scale, 10, 60, 220, 360 - 220);
+	lv_meter_set_scale_ticks(meter3, scale, 21, 3, 17, lv_color_white());
+	lv_meter_set_scale_major_ticks(meter3, scale, 4, 4, 22, lv_color_white(), 15);
 
-    lv_obj_t * sw2 = lv_switch_create(panel3);
+	indic = lv_meter_add_arc(meter3, scale, 10, lv_palette_main(LV_PALETTE_RED), 0);
+	lv_meter_set_indicator_start_value(meter3, indic, 0);
+	lv_meter_set_indicator_end_value(meter3, indic, 20);
 
-	static lv_coord_t grid_main_col_dsc[] = {LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
-	static lv_coord_t grid_main_row_dsc[] = {LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_CONTENT, LV_GRID_TEMPLATE_LAST};
-	lv_obj_set_grid_dsc_array(parent, grid_main_col_dsc, grid_main_row_dsc);
+	indic = lv_meter_add_scale_lines(meter3, scale, lv_palette_darken(LV_PALETTE_RED, 3), lv_palette_darken(LV_PALETTE_RED, 3), true, 0);
+	lv_meter_set_indicator_start_value(meter3, indic, 0);
+	lv_meter_set_indicator_end_value(meter3, indic, 20);
 
+	indic = lv_meter_add_arc(meter3, scale, 12, lv_palette_main(LV_PALETTE_BLUE), 0);
+	lv_meter_set_indicator_start_value(meter3, indic, 20);
+	lv_meter_set_indicator_end_value(meter3, indic, 40);
 
-	static lv_coord_t grid_2_col_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
-	static lv_coord_t grid_2_row_dsc[] = {
-			LV_GRID_CONTENT,  /*Title*/
-			5,                /*Separator*/
-			LV_GRID_CONTENT,  /*Box title*/
-			40,               /*Box*/
-			LV_GRID_CONTENT,  /*Box title*/
-			40,               /*Box*/
-			LV_GRID_CONTENT,  /*Box title*/
-			40,               /*Box*/
-			LV_GRID_CONTENT,  /*Box title*/
-			40, LV_GRID_TEMPLATE_LAST               /*Box*/
-	};
+	indic = lv_meter_add_scale_lines(meter3, scale, lv_palette_darken(LV_PALETTE_BLUE, 3), lv_palette_darken(LV_PALETTE_BLUE, 3), true, 0);
+	lv_meter_set_indicator_start_value(meter3, indic, 20);
+	lv_meter_set_indicator_end_value(meter3, indic, 40);
 
-	lv_obj_set_grid_dsc_array(panel3, grid_2_col_dsc, grid_2_row_dsc);
+	indic = lv_meter_add_arc(meter3, scale, 10, lv_palette_main(LV_PALETTE_GREEN), 0);
+	lv_meter_set_indicator_start_value(meter3, indic, 40);
+	lv_meter_set_indicator_end_value(meter3, indic, 60);
 
-	lv_obj_set_height(panel3, LV_SIZE_CONTENT);
-	lv_obj_set_grid_cell(panel3, LV_GRID_ALIGN_STRETCH, 0, 1, LV_GRID_ALIGN_START, 2, 1);
-	lv_obj_set_grid_cell(panel3_title, LV_GRID_ALIGN_START, 0, 2, LV_GRID_ALIGN_CENTER, 0, 1);
-	lv_obj_set_grid_cell(experience_label, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 2, 1);
-	lv_obj_set_grid_cell(slider1, LV_GRID_ALIGN_CENTER, 0, 2, LV_GRID_ALIGN_CENTER, 3, 1);
-	lv_obj_set_grid_cell(hard_working_label, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 4, 1);
-	lv_obj_set_grid_cell(sw1, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 5, 1);
-	lv_obj_set_grid_cell(team_player_label, LV_GRID_ALIGN_START, 1, 1, LV_GRID_ALIGN_START, 4, 1);
-	lv_obj_set_grid_cell(sw2, LV_GRID_ALIGN_START, 1, 1, LV_GRID_ALIGN_START, 5, 1);
+	indic = lv_meter_add_scale_lines(meter3, scale, lv_palette_darken(LV_PALETTE_GREEN, 3), lv_palette_darken(LV_PALETTE_GREEN, 3), true, 0);
+	lv_meter_set_indicator_start_value(meter3, indic, 40);
+	lv_meter_set_indicator_end_value(meter3, indic, 60);
+
+	indic = lv_meter_add_needle_line(meter3, scale, 4, lv_palette_darken(LV_PALETTE_GREY, 4), -25);
+
+	lv_obj_t * mbps_label = lv_label_create(meter3);
+	lv_label_set_text(mbps_label, "-");
+	lv_obj_add_style(mbps_label, &style_title, 0);
+
+	lv_obj_t * mbps_unit_label = lv_label_create(meter3);
+	lv_label_set_text(mbps_unit_label, "Mbps");
+
+	lv_anim_init(&a);
+	lv_anim_set_values(&a, 10, 60);
+	lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+	lv_anim_set_exec_cb(&a, meter3_anim_cb);
+	lv_anim_set_var(&a, indic);
+	lv_anim_set_time(&a, 4100);
+	lv_anim_set_playback_time(&a, 800);
+	lv_anim_start(&a);
+
+	lv_obj_update_layout(parent);
+
+	lv_coord_t meter_w = lv_obj_get_width(meter3);
+	lv_obj_set_height(meter3, meter_w);
+
+	lv_obj_align(mbps_label, LV_ALIGN_TOP_MID, 10, lv_pct(55));
+	lv_obj_align_to(mbps_unit_label, mbps_label, LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
 
 }
 
@@ -403,77 +417,10 @@ static void analytics_create(lv_obj_t * parent)
 
     lv_timer_create(meter2_timer_cb, 100, meter2_indic);
 
-    // Meter 3
-
-    meter3 = create_meter_box(parent, "Network Speed", "Low speed", "Normal Speed", "High Speed");
-    if(disp_size < DISP_LARGE) lv_obj_add_flag(lv_obj_get_parent(meter3), LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-
-    /*Add a special circle to the needle's pivot*/
-    lv_obj_set_style_pad_hor(meter3, 10, 0);
-    lv_obj_set_style_size(meter3, 10, LV_PART_INDICATOR);
-    lv_obj_set_style_radius(meter3, LV_RADIUS_CIRCLE, LV_PART_INDICATOR);
-    lv_obj_set_style_bg_opa(meter3, LV_OPA_COVER, LV_PART_INDICATOR);
-    lv_obj_set_style_bg_color(meter3, lv_palette_darken(LV_PALETTE_GREY, 4), LV_PART_INDICATOR);
-    lv_obj_set_style_outline_color(meter3, lv_color_white(), LV_PART_INDICATOR);
-    lv_obj_set_style_outline_width(meter3, 3, LV_PART_INDICATOR);
-    lv_obj_set_style_text_color(meter3, lv_palette_darken(LV_PALETTE_GREY, 1), LV_PART_TICKS);
-
-    scale = lv_meter_add_scale(meter3);
-    lv_meter_set_scale_range(meter3, scale, 10, 60, 220, 360 - 220);
-    lv_meter_set_scale_ticks(meter3, scale, 21, 3, 17, lv_color_white());
-    lv_meter_set_scale_major_ticks(meter3, scale, 4, 4, 22, lv_color_white(), 15);
-
-    indic = lv_meter_add_arc(meter3, scale, 10, lv_palette_main(LV_PALETTE_RED), 0);
-    lv_meter_set_indicator_start_value(meter3, indic, 0);
-    lv_meter_set_indicator_end_value(meter3, indic, 20);
-
-    indic = lv_meter_add_scale_lines(meter3, scale, lv_palette_darken(LV_PALETTE_RED, 3), lv_palette_darken(LV_PALETTE_RED, 3), true, 0);
-    lv_meter_set_indicator_start_value(meter3, indic, 0);
-    lv_meter_set_indicator_end_value(meter3, indic, 20);
-
-    indic = lv_meter_add_arc(meter3, scale, 12, lv_palette_main(LV_PALETTE_BLUE), 0);
-    lv_meter_set_indicator_start_value(meter3, indic, 20);
-    lv_meter_set_indicator_end_value(meter3, indic, 40);
-
-    indic = lv_meter_add_scale_lines(meter3, scale, lv_palette_darken(LV_PALETTE_BLUE, 3), lv_palette_darken(LV_PALETTE_BLUE, 3), true, 0);
-    lv_meter_set_indicator_start_value(meter3, indic, 20);
-    lv_meter_set_indicator_end_value(meter3, indic, 40);
-
-    indic = lv_meter_add_arc(meter3, scale, 10, lv_palette_main(LV_PALETTE_GREEN), 0);
-    lv_meter_set_indicator_start_value(meter3, indic, 40);
-    lv_meter_set_indicator_end_value(meter3, indic, 60);
-
-    indic = lv_meter_add_scale_lines(meter3, scale, lv_palette_darken(LV_PALETTE_GREEN, 3), lv_palette_darken(LV_PALETTE_GREEN, 3), true, 0);
-    lv_meter_set_indicator_start_value(meter3, indic, 40);
-    lv_meter_set_indicator_end_value(meter3, indic, 60);
-
-    indic = lv_meter_add_needle_line(meter3, scale, 4, lv_palette_darken(LV_PALETTE_GREY, 4), -25);
-
-    lv_obj_t * mbps_label = lv_label_create(meter3);
-    lv_label_set_text(mbps_label, "-");
-    lv_obj_add_style(mbps_label, &style_title, 0);
-
-    lv_obj_t * mbps_unit_label = lv_label_create(meter3);
-    lv_label_set_text(mbps_unit_label, "Mbps");
-
-    lv_anim_init(&a);
-    lv_anim_set_values(&a, 10, 60);
-    lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-    lv_anim_set_exec_cb(&a, meter3_anim_cb);
-    lv_anim_set_var(&a, indic);
-    lv_anim_set_time(&a, 4100);
-    lv_anim_set_playback_time(&a, 800);
-    lv_anim_start(&a);
-
-    lv_obj_update_layout(parent);
-
 	lv_coord_t meter_w = lv_obj_get_width(meter1);
 	lv_obj_set_height(meter1, meter_w);
 	lv_obj_set_height(meter2, meter_w);
-	lv_obj_set_height(meter3, meter_w);
 
-    lv_obj_align(mbps_label, LV_ALIGN_TOP_MID, 10, lv_pct(55));
-    lv_obj_align_to(mbps_unit_label, mbps_label, LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
 }
 
 
@@ -668,8 +615,6 @@ static lv_obj_t * create_meter_box(lv_obj_t * parent, const char * title, const 
 	lv_obj_set_grid_cell(label2, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_START, 3, 1);
 	lv_obj_set_grid_cell(label3, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_START, 4, 1);
 
-
-
     return meter;
 
 }
@@ -703,71 +648,6 @@ static lv_obj_t * create_shop_item(lv_obj_t * parent, const void * img_src, cons
     lv_obj_set_grid_cell(label, LV_GRID_ALIGN_END, 3, 1, LV_GRID_ALIGN_END, 0, 1);
 
     return cont;
-}
-
-static void calendar_event_cb(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * ta = lv_event_get_user_data(e);
-    lv_obj_t * obj = lv_event_get_target(e);
-    if(code == LV_EVENT_VALUE_CHANGED) {
-        lv_calendar_date_t d;
-        lv_calendar_get_pressed_date(obj, &d);
-        char buf[32];
-        lv_snprintf(buf, sizeof(buf), "%02d.%02d.%d", d.day, d.month, d.year);
-        lv_textarea_set_text(ta, buf);
-
-        lv_obj_del(calendar);
-        lv_obj_del(calendar_header);
-        calendar = NULL;
-        calendar_header = NULL;
-        lv_obj_clear_flag(lv_layer_top(), LV_OBJ_FLAG_CLICKABLE);
-        lv_obj_set_style_bg_opa(lv_layer_top(), LV_OPA_TRANSP, 0);
-    }
-}
-
-static void slider_event_cb(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * obj = lv_event_get_target(e);
-
-    if(code == LV_EVENT_REFR_EXT_DRAW_SIZE) {
-        lv_coord_t *s = lv_event_get_param(e);
-        *s = LV_MAX(*s, 60);
-    } else if(code == LV_EVENT_DRAW_PART_END) {
-        lv_obj_draw_part_dsc_t * dsc = lv_event_get_param(e);
-        if(dsc->part == LV_PART_KNOB && lv_obj_has_state(obj, LV_STATE_PRESSED)) {
-            char buf[8];
-            lv_snprintf(buf, sizeof(buf), "%d", lv_slider_get_value(obj));
-
-            lv_point_t text_size;
-            lv_txt_get_size(&text_size, buf, font_normal, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
-
-            lv_area_t txt_area;
-            txt_area.x1 = dsc->draw_area->x1 + lv_area_get_width(dsc->draw_area) / 2 - text_size.x / 2;
-            txt_area.x2 = txt_area.x1 + text_size.x;
-            txt_area.y2 = dsc->draw_area->y1 - 10;
-            txt_area.y1 = txt_area.y2 - text_size.y;
-
-            lv_area_t bg_area;
-            bg_area.x1 = txt_area.x1 - LV_DPX(8);
-            bg_area.x2 = txt_area.x2 + LV_DPX(8);
-            bg_area.y1 = txt_area.y1 - LV_DPX(8);
-            bg_area.y2 = txt_area.y2 + LV_DPX(8);
-
-            lv_draw_rect_dsc_t rect_dsc;
-            lv_draw_rect_dsc_init(&rect_dsc);
-            rect_dsc.bg_color = lv_palette_darken(LV_PALETTE_GREY, 3);
-            rect_dsc.radius = LV_DPX(5);
-            lv_draw_rect(&bg_area, dsc->clip_area, &rect_dsc);
-
-            lv_draw_label_dsc_t label_dsc;
-            lv_draw_label_dsc_init(&label_dsc);
-            label_dsc.color = lv_color_white();
-            label_dsc.font = font_normal;
-            lv_draw_label(&txt_area, dsc->clip_area, &label_dsc, buf, NULL);
-        }
-    }
 }
 
 static void chart_event_cb(lv_event_t * e)
