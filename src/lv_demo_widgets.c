@@ -479,8 +479,12 @@ static void analytics_create(lv_obj_t * parent)
 
     lv_obj_align(mbps_label, LV_ALIGN_TOP_MID, 10, lv_pct(55));
     lv_obj_align_to(mbps_unit_label, mbps_label, LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
-}
 
+/****************************************************************************************************
+ *
+ * Create third panel - Shop
+ *
+ ****************************************************************************************************/
 void shop_create(lv_obj_t * parent)
 {
     lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_ROW_WRAP);
