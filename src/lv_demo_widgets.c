@@ -26,15 +26,13 @@ typedef enum {
 /**********************
  *  STATIC PROTOTYPES
  **********************/
-static void profile_create(lv_obj_t * parent);
+static void pressure_create(lv_obj_t * parent);
 static void analytics_create(lv_obj_t * parent);
 static void shop_create(lv_obj_t * parent);
 
 static lv_obj_t * create_meter_box(lv_obj_t * parent, const char * title, const char * text1, const char * text2, const char * text3);
 static lv_obj_t * create_shop_item(lv_obj_t * parent, const void * img_src, const char * name, const char * category, const char * price);
 
-static void ta_event_cb(lv_event_t * e);
-static void birthday_event_cb(lv_event_t * e);
 static void calendar_event_cb(lv_event_t * e);
 static void slider_event_cb(lv_event_t * e);
 static void chart_event_cb(lv_event_t * e);
@@ -156,11 +154,11 @@ void lv_demo_widgets(void)
 
     lv_obj_set_style_text_font(lv_scr_act(), font_normal, 0);
 
-    lv_obj_t * t1 = lv_tabview_add_tab(tv, "Profile");
-    lv_obj_t * t2 = lv_tabview_add_tab(tv, "Analytics");
-    lv_obj_t * t3 = lv_tabview_add_tab(tv, "Shop");
+    lv_obj_t * t1 = lv_tabview_add_tab(tv, "Pressure");
+    lv_obj_t * t2 = lv_tabview_add_tab(tv, "History");
+    lv_obj_t * t3 = lv_tabview_add_tab(tv, "Data");
 
-    profile_create(t1);
+    pressure_create(t1);
     analytics_create(t2);
     shop_create(t3);
 }
@@ -169,7 +167,7 @@ void lv_demo_widgets(void)
  *   STATIC FUNCTIONS
  **********************/
 
-static void profile_create(lv_obj_t * parent)
+static void pressure_create(lv_obj_t * parent)
 {
     /*Create the third panel*/
     lv_obj_t * panel3 = lv_obj_create(parent);
@@ -404,6 +402,8 @@ static void analytics_create(lv_obj_t * parent)
     lv_meter_set_indicator_end_value(meter2, meter2_indic[2], 99);
 
     lv_timer_create(meter2_timer_cb, 100, meter2_indic);
+
+    // Meter 3
 
     meter3 = create_meter_box(parent, "Network Speed", "Low speed", "Normal Speed", "High Speed");
     if(disp_size < DISP_LARGE) lv_obj_add_flag(lv_obj_get_parent(meter3), LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
@@ -702,59 +702,6 @@ static lv_obj_t * create_shop_item(lv_obj_t * parent, const void * img_src, cons
     lv_obj_set_grid_cell(label, LV_GRID_ALIGN_END, 3, 1, LV_GRID_ALIGN_END, 0, 1);
 
     return cont;
-}
-
-static void ta_event_cb(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * ta = lv_event_get_target(e);
-    lv_obj_t * kb = lv_event_get_user_data(e);
-    if(code == LV_EVENT_FOCUSED) {
-        if(lv_indev_get_type(lv_indev_get_act()) != LV_INDEV_TYPE_KEYPAD) {
-            lv_keyboard_set_textarea(kb, ta);
-            lv_obj_set_style_max_height(kb, LV_HOR_RES * 2 / 3, 0);
-            lv_obj_update_layout(tv);   /*Be sure the sizes are recalculated*/
-            lv_obj_set_height(tv, LV_VER_RES - lv_obj_get_height(kb));
-            lv_obj_clear_flag(kb, LV_OBJ_FLAG_HIDDEN);
-            lv_obj_scroll_to_view_recursive(ta, LV_ANIM_OFF);
-        }
-    }
-    else if(code == LV_EVENT_DEFOCUSED) {
-        lv_keyboard_set_textarea(kb, NULL);
-        lv_obj_set_height(tv, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-    }
-    else if(code == LV_EVENT_READY || code == LV_EVENT_CANCEL) {
-        lv_obj_set_height(tv, LV_VER_RES);
-        lv_obj_add_flag(kb, LV_OBJ_FLAG_HIDDEN);
-        lv_obj_clear_state(ta, LV_STATE_FOCUSED);
-        lv_indev_reset(NULL, ta);   /*To forget the last clicked object to make it focusable again*/
-    }
-}
-
-static void birthday_event_cb(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    lv_obj_t * ta = lv_event_get_target(e);
-
-    if(code == LV_EVENT_FOCUSED) {
-        if(lv_indev_get_type(lv_indev_get_act()) == LV_INDEV_TYPE_POINTER) {
-            if(calendar == NULL) {
-                lv_obj_add_flag(lv_layer_top(), LV_OBJ_FLAG_CLICKABLE);
-                calendar = lv_calendar_create(lv_layer_top());
-                lv_obj_set_style_bg_opa(lv_layer_top(), LV_OPA_50, 0);
-                lv_obj_set_style_bg_color(lv_layer_top(), lv_palette_main(LV_PALETTE_GREY), 0);
-                if(disp_size == DISP_SMALL) lv_obj_set_size(calendar, 180, 180);
-                else if(disp_size == DISP_MEDIUM) lv_obj_set_size(calendar, 200, 200);
-                else  lv_obj_set_size(calendar, 300, 300);
-                lv_calendar_set_showed_date(calendar, 1990, 01);
-                lv_obj_align(calendar, LV_ALIGN_CENTER, 0, 30);
-                lv_obj_add_event_cb(calendar, calendar_event_cb, LV_EVENT_ALL, ta);
-
-                calendar_header = lv_calendar_header_dropdown_create(lv_layer_top(), calendar);
-            }
-        }
-    }
 }
 
 static void calendar_event_cb(lv_event_t * e)
