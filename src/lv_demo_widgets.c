@@ -466,16 +466,11 @@ static void analytics_create(lv_obj_t * parent)
     lv_anim_start(&a);
 
     lv_obj_update_layout(parent);
-    if(disp_size == DISP_MEDIUM) {
-        lv_obj_set_size(meter1, 200, 200);
-        lv_obj_set_size(meter2, 200, 200);
-        lv_obj_set_size(meter3, 200, 200);
-    } else {
-        lv_coord_t meter_w = lv_obj_get_width(meter1);
-        lv_obj_set_height(meter1, meter_w);
-        lv_obj_set_height(meter2, meter_w);
-        lv_obj_set_height(meter3, meter_w);
-    }
+
+	lv_coord_t meter_w = lv_obj_get_width(meter1);
+	lv_obj_set_height(meter1, meter_w);
+	lv_obj_set_height(meter2, meter_w);
+	lv_obj_set_height(meter3, meter_w);
 
     lv_obj_align(mbps_label, LV_ALIGN_TOP_MID, 10, lv_pct(55));
     lv_obj_align_to(mbps_unit_label, mbps_label, LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
