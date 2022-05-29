@@ -18,6 +18,8 @@
 #include "hal_stm_lvgl/tft/tft.h"
 #include "hal_stm_lvgl/touchpad/touchpad.h"
 
+#include "lvgl-local/lv_widgets/lv_demo_widgets.h"
+
 static void SystemClock_Config(void);
 
 int main(void)
