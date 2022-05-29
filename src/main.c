@@ -41,9 +41,6 @@ int main(void)
 	tft_init();
 	touchpad_init();
 
-//	lv_example_scroll_3();
-//	lv_example_chart_7();
-
 	lv_demo_widgets();
 
 	while (1)
