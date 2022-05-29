@@ -8,8 +8,6 @@
  *********************/
 #include "lv_demo.h"
 
-#if LV_USE_DEMO_WIDGETS
-
 /*********************
  *      DEFINES
  *********************/
@@ -860,5 +858,3 @@ static void meter3_anim_cb(void * var, int32_t v)
     lv_obj_t * label = lv_obj_get_child(meter3, 0);
     lv_label_set_text_fmt(label, "%d", v);
 }
-
-#endif
