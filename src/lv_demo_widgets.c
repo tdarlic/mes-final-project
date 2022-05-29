@@ -28,10 +28,9 @@ typedef enum {
  **********************/
 static void pressure_create(lv_obj_t * parent);
 static void analytics_create(lv_obj_t * parent);
-static void shop_create(lv_obj_t * parent);
+static void setup_create(lv_obj_t * parent);
 
 static lv_obj_t * create_meter_box(lv_obj_t * parent, const char * title, const char * text1, const char * text2, const char * text3);
-static lv_obj_t * create_shop_item(lv_obj_t * parent, const void * img_src, const char * name, const char * category, const char * price);
 
 static void chart_event_cb(lv_event_t * e);
 static void shop_chart_event_cb(lv_event_t * e);
@@ -152,11 +151,11 @@ void lv_demo_widgets(void)
 
     lv_obj_t * t1 = lv_tabview_add_tab(tv, "Pressure");
     lv_obj_t * t2 = lv_tabview_add_tab(tv, "History");
-    lv_obj_t * t3 = lv_tabview_add_tab(tv, "Data");
+    lv_obj_t * t3 = lv_tabview_add_tab(tv, "Setup");
 
     pressure_create(t1);
     analytics_create(t2);
-    shop_create(t3);
+    setup_create(t3);
 }
 
 /**********************
@@ -173,7 +172,7 @@ static void pressure_create(lv_obj_t * parent)
 
 	lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_ROW_WRAP);
 
-	meter3 = create_meter_box(parent, "Network Speed", "Low speed", "Normal Speed", "High Speed");
+	meter3 = create_meter_box(parent, "Pressure", "Stormy", "Rain", "Dry");
 	lv_obj_add_flag(lv_obj_get_parent(meter3), LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
 
 	/*Add a special circle to the needle's pivot*/
@@ -187,49 +186,49 @@ static void pressure_create(lv_obj_t * parent)
 	lv_obj_set_style_text_color(meter3, lv_palette_darken(LV_PALETTE_GREY, 1), LV_PART_TICKS);
 
 	scale = lv_meter_add_scale(meter3);
-	lv_meter_set_scale_range(meter3, scale, 10, 60, 220, 360 - 220);
-	lv_meter_set_scale_ticks(meter3, scale, 21, 3, 17, lv_color_white());
+	lv_meter_set_scale_range(meter3, scale, 930, 1070, 250, 360 - 250);
+	lv_meter_set_scale_ticks(meter3, scale, 29, 3, 17, lv_color_white());
 	lv_meter_set_scale_major_ticks(meter3, scale, 4, 4, 22, lv_color_white(), 15);
 
 	indic = lv_meter_add_arc(meter3, scale, 10, lv_palette_main(LV_PALETTE_RED), 0);
-	lv_meter_set_indicator_start_value(meter3, indic, 0);
-	lv_meter_set_indicator_end_value(meter3, indic, 20);
+	lv_meter_set_indicator_start_value(meter3, indic, 900);
+	lv_meter_set_indicator_end_value(meter3, indic, 990);
 
 	indic = lv_meter_add_scale_lines(meter3, scale, lv_palette_darken(LV_PALETTE_RED, 3), lv_palette_darken(LV_PALETTE_RED, 3), true, 0);
-	lv_meter_set_indicator_start_value(meter3, indic, 0);
-	lv_meter_set_indicator_end_value(meter3, indic, 20);
+	lv_meter_set_indicator_start_value(meter3, indic, 900);
+	lv_meter_set_indicator_end_value(meter3, indic, 990);
 
 	indic = lv_meter_add_arc(meter3, scale, 12, lv_palette_main(LV_PALETTE_BLUE), 0);
-	lv_meter_set_indicator_start_value(meter3, indic, 20);
-	lv_meter_set_indicator_end_value(meter3, indic, 40);
+	lv_meter_set_indicator_start_value(meter3, indic, 990);
+	lv_meter_set_indicator_end_value(meter3, indic, 1010);
 
 	indic = lv_meter_add_scale_lines(meter3, scale, lv_palette_darken(LV_PALETTE_BLUE, 3), lv_palette_darken(LV_PALETTE_BLUE, 3), true, 0);
-	lv_meter_set_indicator_start_value(meter3, indic, 20);
-	lv_meter_set_indicator_end_value(meter3, indic, 40);
+	lv_meter_set_indicator_start_value(meter3, indic, 990);
+	lv_meter_set_indicator_end_value(meter3, indic, 1010);
 
 	indic = lv_meter_add_arc(meter3, scale, 10, lv_palette_main(LV_PALETTE_GREEN), 0);
-	lv_meter_set_indicator_start_value(meter3, indic, 40);
-	lv_meter_set_indicator_end_value(meter3, indic, 60);
+	lv_meter_set_indicator_start_value(meter3, indic, 1010);
+	lv_meter_set_indicator_end_value(meter3, indic, 1070);
 
 	indic = lv_meter_add_scale_lines(meter3, scale, lv_palette_darken(LV_PALETTE_GREEN, 3), lv_palette_darken(LV_PALETTE_GREEN, 3), true, 0);
-	lv_meter_set_indicator_start_value(meter3, indic, 40);
-	lv_meter_set_indicator_end_value(meter3, indic, 60);
+	lv_meter_set_indicator_start_value(meter3, indic, 1010);
+	lv_meter_set_indicator_end_value(meter3, indic, 1070);
 
 	indic = lv_meter_add_needle_line(meter3, scale, 4, lv_palette_darken(LV_PALETTE_GREY, 4), -25);
 
-	lv_obj_t * mbps_label = lv_label_create(meter3);
-	lv_label_set_text(mbps_label, "-");
-	lv_obj_add_style(mbps_label, &style_title, 0);
+	lv_obj_t * hpa_label = lv_label_create(meter3);
+	lv_label_set_text(hpa_label, "-");
+	lv_obj_add_style(hpa_label, &style_title, 0);
 
-	lv_obj_t * mbps_unit_label = lv_label_create(meter3);
-	lv_label_set_text(mbps_unit_label, "Mbps");
+	lv_obj_t * hpa_unit_label = lv_label_create(meter3);
+	lv_label_set_text(hpa_unit_label, "hPa");
 
 	lv_anim_init(&a);
-	lv_anim_set_values(&a, 10, 60);
+	lv_anim_set_values(&a, 935, 1060);
 	lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
 	lv_anim_set_exec_cb(&a, meter3_anim_cb);
 	lv_anim_set_var(&a, indic);
-	lv_anim_set_time(&a, 4100);
+	lv_anim_set_time(&a, 8000);
 	lv_anim_set_playback_time(&a, 800);
 	lv_anim_start(&a);
 
@@ -238,8 +237,8 @@ static void pressure_create(lv_obj_t * parent)
 	lv_coord_t meter_w = lv_obj_get_width(meter3);
 	lv_obj_set_height(meter3, meter_w);
 
-	lv_obj_align(mbps_label, LV_ALIGN_TOP_MID, 10, lv_pct(55));
-	lv_obj_align_to(mbps_unit_label, mbps_label, LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
+	lv_obj_align(hpa_label, LV_ALIGN_TOP_MID, 10, lv_pct(55));
+	lv_obj_align_to(hpa_unit_label, hpa_label, LV_ALIGN_OUT_RIGHT_BOTTOM, 10, 0);
 
 }
 
@@ -429,7 +428,7 @@ static void analytics_create(lv_obj_t * parent)
  * Create third panel - Shop
  *
  ****************************************************************************************************/
-void shop_create(lv_obj_t * parent)
+void setup_create(lv_obj_t * parent)
 {
     lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_ROW_WRAP);
 
@@ -496,31 +495,6 @@ void shop_create(lv_obj_t * parent)
 	lv_obj_set_grid_cell(amount, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 2, 1);
 	lv_obj_set_grid_cell(hint, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 3, 1);
 	lv_obj_set_grid_cell(chart3, LV_GRID_ALIGN_END, 0, 1, LV_GRID_ALIGN_START, 4, 1);
-
-
-    lv_obj_t * list = lv_obj_create(parent);
-    if(disp_size == DISP_SMALL) {
-        lv_obj_add_flag(list, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-        lv_obj_set_height(list, LV_PCT(100));
-    } else {
-        lv_obj_set_height(list, LV_PCT(100));
-        lv_obj_set_style_max_height(list, 300, 0);
-    }
-
-    lv_obj_set_flex_flow(list, LV_FLEX_FLOW_COLUMN);
-    lv_obj_set_flex_grow(list, 1);
-    lv_obj_add_flag(list, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
-
-    title = lv_label_create(list);
-    lv_label_set_text(title, "Top products");
-    lv_obj_add_style(title, &style_title, 0);
-
-    LV_IMG_DECLARE(img_clothes);
-    create_shop_item(list, &img_clothes, "Blue jeans", "Clothes", "$722");
-    create_shop_item(list, &img_clothes, "Blue jeans", "Clothes", "$411");
-    create_shop_item(list, &img_clothes, "Blue jeans", "Clothes", "$917");
-    create_shop_item(list, &img_clothes, "Blue jeans", "Clothes", "$64");
-    create_shop_item(list, &img_clothes, "Blue jeans", "Clothes", "$805");
 
     lv_obj_t * notifications = lv_obj_create(parent);
     if(disp_size == DISP_SMALL) {
@@ -617,37 +591,6 @@ static lv_obj_t * create_meter_box(lv_obj_t * parent, const char * title, const 
 
     return meter;
 
-}
-
-static lv_obj_t * create_shop_item(lv_obj_t * parent, const void * img_src, const char * name, const char * category, const char * price)
-{
-    static lv_coord_t grid_col_dsc[] = {LV_GRID_CONTENT, 5, LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
-    static lv_coord_t grid_row_dsc[] = {LV_GRID_FR(1), LV_GRID_FR(1), LV_GRID_TEMPLATE_LAST};
-
-    lv_obj_t * cont = lv_obj_create(parent);
-    lv_obj_remove_style_all(cont);
-    lv_obj_set_size(cont, LV_PCT(100), LV_SIZE_CONTENT);
-    lv_obj_set_grid_dsc_array(cont, grid_col_dsc, grid_row_dsc);
-
-    lv_obj_t * img = lv_img_create(cont);
-    lv_img_set_src(img, img_src);
-    lv_obj_set_grid_cell(img, LV_GRID_ALIGN_START, 0, 1, LV_GRID_ALIGN_START, 0, 2);
-
-    lv_obj_t * label;
-    label = lv_label_create(cont);
-    lv_label_set_text(label, name);
-    lv_obj_set_grid_cell(label, LV_GRID_ALIGN_START, 2, 1, LV_GRID_ALIGN_END, 0, 1);
-
-    label = lv_label_create(cont);
-    lv_label_set_text(label, category);
-    lv_obj_add_style(label, &style_text_muted, 0);
-    lv_obj_set_grid_cell(label, LV_GRID_ALIGN_START, 2, 1, LV_GRID_ALIGN_START, 1, 1);
-
-    label = lv_label_create(cont);
-    lv_label_set_text(label, price);
-    lv_obj_set_grid_cell(label, LV_GRID_ALIGN_END, 3, 1, LV_GRID_ALIGN_END, 0, 1);
-
-    return cont;
 }
 
 static void chart_event_cb(lv_event_t * e)
