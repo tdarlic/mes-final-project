@@ -163,6 +163,19 @@ static eCommandResult_T ConsoleCommandGyroPresent(const char buffer[]){
 	return COMMAND_SUCCESS;
 }
 
+/**
+ * Testing is the barometer present or not
+ * In case that the barometer is present the device will return Barometer OK else Barometer error
+ */
+static eCommandResult_T ConsoleCommandBaroPresent(const char buffer[]){
+	if (BSP_GYRO_Init(GYRO_SCALE) == GYRO_OK){
+		ConsoleIoSendString("Gyro OK\n");
+	} else {
+		ConsoleIoSendString("Gyro Error\n");
+	}
+	return COMMAND_SUCCESS;
+}
+
 static eCommandResult_T ConsoleCommandComment(const char buffer[])
 {
 	// do nothing

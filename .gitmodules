@@ -1,3 +1,6 @@
 [submodule "lvgl"]
 	path = lvgl
 	url = https://github.com/littlevgl/lvgl.git
+[submodule "Drivers/LPS28DFW"]
+	path = Drivers/LPS28DFW
+	url = https://github.com/STMicroelectronics/lps28dfw.git
