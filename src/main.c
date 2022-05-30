@@ -18,9 +18,14 @@
 
 #include "hal_stm_lvgl/tft/tft.h"
 #include "hal_stm_lvgl/touchpad/touchpad.h"
+#include "console.h"
+#include "retarget.h"
 
+UART_HandleTypeDef huart1;
 
 static void SystemClock_Config(void);
+static void MX_USART1_UART_Init(void);
+void Error_Handler(void);
 
 int main(void)
 {
@@ -29,6 +34,8 @@ int main(void)
 
 	/* Configure the system clock to 180 MHz */
 	SystemClock_Config();
+
+	MX_USART1_UART_Init();
 
 	/*Start up indication*/
 	BSP_LED_Init(LED3);
@@ -45,10 +52,14 @@ int main(void)
 
 	lv_widgets();
 
+	RetargetInit(&huart1);
+	ConsoleInit(&huart1);
+
 	while (1)
 	{
 		HAL_Delay(3);
 		lv_task_handler();
+		ConsoleProcess();
 	}
 }
 
@@ -125,5 +136,53 @@ static void SystemClock_Config(void)
   PeriphClkInitStruct.PLLSAI.PLLSAIR = 4;
   PeriphClkInitStruct.PLLSAIDivR = RCC_PLLSAIDIVR_8;
   HAL_RCCEx_PeriphCLKConfig(&PeriphClkInitStruct);
+}
+
+/**
+  * @brief USART1 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_USART1_UART_Init(void)
+{
+
+  /* USER CODE BEGIN USART1_Init 0 */
+
+  /* USER CODE END USART1_Init 0 */
+
+  /* USER CODE BEGIN USART1_Init 1 */
+
+  /* USER CODE END USART1_Init 1 */
+  huart1.Instance = USART1;
+  huart1.Init.BaudRate = 115200;
+  huart1.Init.WordLength = UART_WORDLENGTH_8B;
+  huart1.Init.StopBits = UART_STOPBITS_1;
+  huart1.Init.Parity = UART_PARITY_NONE;
+  huart1.Init.Mode = UART_MODE_TX_RX;
+  huart1.Init.HwFlowCtl = UART_HWCONTROL_NONE;
+  huart1.Init.OverSampling = UART_OVERSAMPLING_16;
+  if (HAL_UART_Init(&huart1) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN USART1_Init 2 */
+
+  /* USER CODE END USART1_Init 2 */
+
+}
+
+/**
+  * @brief  This function is executed in case of error occurrence.
+  * @retval None
+  */
+void Error_Handler(void)
+{
+  /* USER CODE BEGIN Error_Handler_Debug */
+  /* User can add his own implementation to report the HAL error return state */
+  __disable_irq();
+  while (1)
+  {
+  }
+  /* USER CODE END Error_Handler_Debug */
 }
 

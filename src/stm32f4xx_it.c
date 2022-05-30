@@ -15,7 +15,7 @@
 #include <cmsis_os.h>
 #endif
 #include "stm32f4xx_it.h"
-
+#include "main.h"
 #include "lvgl/lvgl.h"
 
 /* Private typedef -----------------------------------------------------------*/
@@ -24,6 +24,8 @@
 /* Private variables ---------------------------------------------------------*/
 /* Private function prototypes -----------------------------------------------*/
 /* Private functions ---------------------------------------------------------*/
+/* External variables --------------------------------------------------------*/
+extern UART_HandleTypeDef huart1;
 
 /******************************************************************************/
 /*            	  	    Processor Exceptions Handlers                         */
@@ -44,4 +46,13 @@ void SysTick_Handler(void)
 #ifdef USE_RTOS_SYSTICK
 	osSystickHandler();
 #endif
+}
+
+
+/**
+  * @brief This function handles USART1 global interrupt.
+  */
+void USART1_IRQHandler(void)
+{
+ HAL_UART_IRQHandler(&huart1);
 }
