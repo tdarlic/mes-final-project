@@ -62,6 +62,9 @@
 /** @addtogroup STM32F429I_DISCOVERY_LOW_LEVEL_Exported_Types STM32F429I DISCOVERY LOW LEVEL Exported Types
   * @{
   */
+
+extern I2C_HandleTypeDef I2cHandle;
+
 typedef enum 
 {
   LED3 = 0,

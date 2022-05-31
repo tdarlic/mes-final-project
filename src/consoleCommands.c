@@ -13,6 +13,7 @@
 #include "version.h"
 #include "../Drivers/i3g4250d.h"
 #include "../Drivers/stm32f429i_discovery_gyroscope.h"
+#include "../Drivers/barometer.h"
 
 
 #define IGNORE_UNUSED_VARIABLE(x)  if ( &x == &x ) {}
@@ -25,21 +26,23 @@
 
 static eCommandResult_T ConsoleCommandVer(const char buffer[]);
 static eCommandResult_T ConsoleCommandHelp(const char buffer[]);
-static eCommandResult_T ConsoleCommandParamExampleInt16(const char buffer[]);
-static eCommandResult_T ConsoleCommandParamExampleHexUint16(const char buffer[]);
 static eCommandResult_T ConsoleCommandGyroPresent(const char buffer[]);
 static eCommandResult_T ConsoleCommandGyroTest(const char buffer[]);
 static eCommandResult_T ConsoleCommandComment(const char buffer[]);
+static eCommandResult_T ConsoleCommandBaroPresent(const char buffer[]);
+static eCommandResult_T ConsoleCommandBaroData(const char buffer[]);
+static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]);
 
 static const sConsoleCommandTable_T mConsoleCommandTable[] =
 {
     {";", &ConsoleCommandComment, HELP("Comment! You do need a space after the semicolon. ")},
     {"help", &ConsoleCommandHelp, HELP("Lists the commands available")},
     {"ver", &ConsoleCommandVer, HELP("Get the version string")},
-    {"int", &ConsoleCommandParamExampleInt16, HELP("How to get a signed int16 from params list: int -321")},
-    {"u16h", &ConsoleCommandParamExampleHexUint16, HELP("How to get a hex u16 from the params list: u16h aB12")},
 	{"gp", &ConsoleCommandGyroPresent, HELP("Check is gyro present and responding")},
 	{"gt", &ConsoleCommandGyroTest, HELP("Test gyro: params 10 - number of seconds to test")},
+	{"bp", &ConsoleCommandBaroPresent, HELP("Check is barometer present and responding")},
+	{"bd", &ConsoleCommandBaroData, HELP("Get barometer data: params 10 - number of seconds to test")},
+	{"br", &ConsoleCommandBaroReset, HELP("Reset barometer")},
 
 	CONSOLE_COMMAND_TABLE_END // must be LAST
 };
@@ -163,17 +166,205 @@ static eCommandResult_T ConsoleCommandGyroPresent(const char buffer[]){
 	return COMMAND_SUCCESS;
 }
 
+static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]){
+
+	stmdev_ctx_t dev_ctx;
+	lps28dfw_stat_t status;
+	uint32_t endTick = 0;
+
+	dev_ctx = lps28dfw_init();
+	ConsoleIoSendString("Resetting Barometer\n");
+	lps28dfw_init_set(&dev_ctx, LPS28DFW_BOOT);
+	lps28dfw_init_set(&dev_ctx, LPS28DFW_RESET);
+	//function will exit after tsec
+	endTick = HAL_GetTick() + (3 * 1000);
+	/* Read samples in polling mode (no int) */
+	do {
+		lps28dfw_status_get(&dev_ctx, &status);
+		if (HAL_GetTick() > endTick){
+			ConsoleIoSendString("Timeout resetting\n");
+			break;
+		}
+	} while (status.sw_reset);
+
+	return COMMAND_SUCCESS;
+}
+
 /**
  * Testing is the barometer present or not
  * In case that the barometer is present the device will return Barometer OK else Barometer error
  */
 static eCommandResult_T ConsoleCommandBaroPresent(const char buffer[]){
-	if (BSP_GYRO_Init(GYRO_SCALE) == GYRO_OK){
-		ConsoleIoSendString("Gyro OK\n");
+
+	lps28dfw_id_t id;
+	stmdev_ctx_t dev_ctx;
+	lps28dfw_stat_t status;
+	lps28dfw_all_sources_t all_sources;
+	char strbuf[100];
+	static lps28dfw_data_t data;
+	lps28dfw_md_t md;
+
+	id.whoami = 0;
+
+	dev_ctx = lps28dfw_init();
+	/* Check device ID */
+	lps28dfw_id_get(&dev_ctx, &id);
+
+	if (id.whoami == LPS28DFW_ID){
+		ConsoleIoSendString("\r\n**********************************\r\nBarometer OK\n");
+
+//		lps28dfw_init_set(&dev_ctx, LPS28DFW_BOOT);
+//		lps28dfw_init_set(&dev_ctx, LPS28DFW_RESET);
+		HAL_Delay(100);
+
+		lps28dfw_status_get(&dev_ctx, &status);
+
+		ConsoleIoSendString("Barometer Status\n");
+		memset(strbuf, 0, 100);
+        sprintf(strbuf, "Restoring configuration registers (reset): %i\r\n", status.sw_reset);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Restoring calibration parameters (boot): %i\r\n", status.boot);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Pressure data ready: %i\r\n", status.drdy_pres);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Pressure data overrun: %i\r\n", status.ovr_pres);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Temperature data ready: %i\r\n", status.drdy_temp);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Temperature data overrun: %i\r\n", status.ovr_temp);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Single measurement is finished: %i\r\n", status.end_meas);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Auto-Zero value is set: %i\r\n", status.ref_done);
+        ConsoleIoSendString(strbuf);
+
+        lps28dfw_all_sources_get(&dev_ctx, &all_sources);
+
+        ConsoleIoSendString("Barometer All Sources Data:\n");
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Pressure data ready: %i\r\n", all_sources.drdy_pres);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Temperature data ready: %i\r\n", all_sources.drdy_temp);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Over pressure event: %i\r\n", all_sources.over_pres);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "Under pressure event: %i\r\n", all_sources.under_pres);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "FIFO Full: %i\r\n", all_sources.fifo_full);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "FIFO overrun: %i\r\n", all_sources.fifo_ovr);
+        ConsoleIoSendString(strbuf);
+        memset(strbuf, 0, 100);
+        sprintf(strbuf, "FIFO threshold reached: %i\r\n", all_sources.fifo_th);
+        ConsoleIoSendString(strbuf);
+
+        memset(strbuf, 0, 100);
+        lps28dfw_data_get(&dev_ctx, &md, &data);
+        sprintf(strbuf, "pressure [hPa]:%6.2f temperature [degC]:%6.2f\r\n", data.pressure.hpa, data.heat.deg_c);
+        ConsoleIoSendString(strbuf);
+
 	} else {
-		ConsoleIoSendString("Gyro Error\n");
+		ConsoleIoSendString("Barometer Error\n");
+		memset(strbuf, 0, 100);
+		sprintf(strbuf, "Barometer returning: 0x%X\r\n", id.whoami);
+		ConsoleIoSendString(strbuf);
+
 	}
 	return COMMAND_SUCCESS;
+}
+
+/**
+ * Get data from barometer
+ */
+static eCommandResult_T ConsoleCommandBaroData(const char buffer[]){
+
+	lps28dfw_id_t id;
+	stmdev_ctx_t dev_ctx;
+	eCommandResult_T result;
+	uint32_t endTick = 0;
+	lps28dfw_all_sources_t all_sources;
+	lps28dfw_bus_mode_t bus_mode;
+	lps28dfw_stat_t status;
+	lps28dfw_pin_int_route_t int_route;
+	lps28dfw_md_t md;
+	char strbuf[100];
+	int16_t tsec;
+	static lps28dfw_data_t data;
+
+	dev_ctx = lps28dfw_init();
+
+	result = ConsoleReceiveParamInt16(buffer, 1, &tsec);
+	if (COMMAND_SUCCESS == result ){
+
+		if (tsec < 1){
+			ConsoleIoSendString("Error in duration of test: < 1");
+			return COMMAND_PARAMETER_ERROR;
+		}
+
+		/* Restore default configuration */
+//		lps28dfw_init_set(&dev_ctx, LPS28DFW_BOOT);
+//		lps28dfw_init_set(&dev_ctx, LPS28DFW_RESET);
+//		do {
+//			lps28dfw_status_get(&dev_ctx, &status);
+//		} while (status.sw_reset);
+
+
+		/* Set bdu and if_inc recommended for driver usage */
+		lps28dfw_init_set(&dev_ctx, LPS28DFW_DRV_RDY);
+
+		lps28dfw_fifo_mode_set(&dev_ctx, LPS28DFW_STREAM);
+
+		/* Select bus interface */
+		bus_mode.filter = LPS28DFW_AUTO;
+		bus_mode.interface = LPS28DFW_SEL_BY_HW;
+		lps28dfw_bus_mode_set(&dev_ctx, &bus_mode);
+
+		/* Set Output Data Rate */
+		md.odr = LPS28DFW_4Hz;
+		md.avg = LPS28DFW_4_AVG;
+		md.lpf = LPS28DFW_LPF_ODR_DIV_4;
+		md.fs = LPS28DFW_1260hPa;
+		lps28dfw_mode_set(&dev_ctx, &md);
+
+		/* Configure inerrupt pins */
+		lps28dfw_pin_int_route_get(&dev_ctx, &int_route);
+		int_route.drdy_pres   = PROPERTY_DISABLE;
+		lps28dfw_pin_int_route_set(&dev_ctx, &int_route);
+
+		//function will exit after tsec
+		endTick = HAL_GetTick() + (tsec * 1000);
+		/* Read samples in polling mode (no int) */
+		while(HAL_GetTick() < endTick)
+		{
+			lps28dfw_all_sources_get(&dev_ctx, &all_sources);
+			    if ( 1) {//all_sources.drdy_pres | all_sources.drdy_temp ) {
+					lps28dfw_data_get(&dev_ctx, &md, &data);
+					sprintf(strbuf, "pressure [hPa]:%6.2f temperature [degC]:%6.2f\r\n", data.pressure.hpa, data.heat.deg_c);
+					ConsoleIoSendString(strbuf);
+			    } else {
+			    	sprintf(strbuf, "pressure data:%i | temperature data:%i\r\n", all_sources.drdy_pres, all_sources.drdy_temp);
+			    	ConsoleIoSendString(strbuf);
+			    }
+			// Delay for 500 ms
+			HAL_Delay(100);
+		}
+
+		return COMMAND_SUCCESS;
+	}
+
+	return COMMAND_ERROR;
 }
 
 static eCommandResult_T ConsoleCommandComment(const char buffer[])
@@ -199,36 +390,6 @@ static eCommandResult_T ConsoleCommandHelp(const char buffer[])
 		ConsoleIoSendString(" : ");
 		ConsoleIoSendString(mConsoleCommandTable[i].help);
 #endif // CONSOLE_COMMAND_MAX_HELP_LENGTH > 0
-		ConsoleIoSendString(STR_ENDLINE);
-	}
-	return result;
-}
-
-static eCommandResult_T ConsoleCommandParamExampleInt16(const char buffer[])
-{
-	int16_t parameterInt;
-	eCommandResult_T result;
-	result = ConsoleReceiveParamInt16(buffer, 1, &parameterInt);
-	if ( COMMAND_SUCCESS == result )
-	{
-		ConsoleIoSendString("Parameter is ");
-		ConsoleSendParamInt16(parameterInt);
-		ConsoleIoSendString(" (0x");
-		ConsoleSendParamHexUint16((uint16_t)parameterInt);
-		ConsoleIoSendString(")");
-		ConsoleIoSendString(STR_ENDLINE);
-	}
-	return result;
-}
-static eCommandResult_T ConsoleCommandParamExampleHexUint16(const char buffer[])
-{
-	uint16_t parameterUint16;
-	eCommandResult_T result;
-	result = ConsoleReceiveParamHexUint16(buffer, 1, &parameterUint16);
-	if ( COMMAND_SUCCESS == result )
-	{
-		ConsoleIoSendString("Parameter is 0x");
-		ConsoleSendParamHexUint16(parameterUint16);
 		ConsoleIoSendString(STR_ENDLINE);
 	}
 	return result;
