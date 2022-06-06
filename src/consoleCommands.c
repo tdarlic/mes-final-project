@@ -32,6 +32,7 @@ static eCommandResult_T ConsoleCommandComment(const char buffer[]);
 static eCommandResult_T ConsoleCommandBaroPresent(const char buffer[]);
 static eCommandResult_T ConsoleCommandBaroData(const char buffer[]);
 static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]);
+static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]);
 
 static const sConsoleCommandTable_T mConsoleCommandTable[] =
 {
@@ -43,6 +44,7 @@ static const sConsoleCommandTable_T mConsoleCommandTable[] =
 	{"bp", &ConsoleCommandBaroPresent, HELP("Check is barometer present and responding")},
 	{"bd", &ConsoleCommandBaroData, HELP("Get barometer data: params 10 - number of seconds to test")},
 	{"br", &ConsoleCommandBaroReset, HELP("Reset barometer")},
+	{"ap", &ConsoleCommandAccPresent, HELP("Check is accelerometer present and responding")},
 
 	CONSOLE_COMMAND_TABLE_END // must be LAST
 };
@@ -190,6 +192,25 @@ static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]){
 	return COMMAND_SUCCESS;
 }
 
+#define MMA8452Q_DEFAULT_ADDRESS (0x1C << 1)
+
+/**
+ * Testing is accelerometer present
+ */
+static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]){
+	//HAL_I2C_Mem_Read(&I2cHandle, LPS28DFW_I2C_ADD_H, reg, I2C_MEMADD_SIZE_8BIT, bufp, len, 1000);
+	uint8_t reg;
+	char strbuf[100];
+	memset(strbuf, 0, 100);
+
+	HAL_I2C_Mem_Read(&I2cHandle, MMA8452Q_DEFAULT_ADDRESS, 0x0D, I2C_MEMADD_SIZE_8BIT, &reg, 1, 1000);
+
+	sprintf(strbuf, "ACC ID returned: 0x%X\r\n", reg);
+	ConsoleIoSendString(strbuf);
+
+	return COMMAND_SUCCESS;
+}
+
 /**
  * Testing is the barometer present or not
  * In case that the barometer is present the device will return Barometer OK else Barometer error
@@ -289,8 +310,6 @@ static eCommandResult_T ConsoleCommandBaroPresent(const char buffer[]){
  * Get data from barometer
  */
 static eCommandResult_T ConsoleCommandBaroData(const char buffer[]){
-
-	lps28dfw_id_t id;
 	stmdev_ctx_t dev_ctx;
 	eCommandResult_T result;
 	uint32_t endTick = 0;
@@ -314,17 +333,17 @@ static eCommandResult_T ConsoleCommandBaroData(const char buffer[]){
 		}
 
 		/* Restore default configuration */
-//		lps28dfw_init_set(&dev_ctx, LPS28DFW_BOOT);
-//		lps28dfw_init_set(&dev_ctx, LPS28DFW_RESET);
-//		do {
-//			lps28dfw_status_get(&dev_ctx, &status);
-//		} while (status.sw_reset);
+		lps28dfw_init_set(&dev_ctx, LPS28DFW_BOOT);
+		lps28dfw_init_set(&dev_ctx, LPS28DFW_RESET);
+		do {
+			lps28dfw_status_get(&dev_ctx, &status);
+		} while (status.sw_reset);
 
 
 		/* Set bdu and if_inc recommended for driver usage */
 		lps28dfw_init_set(&dev_ctx, LPS28DFW_DRV_RDY);
 
-		lps28dfw_fifo_mode_set(&dev_ctx, LPS28DFW_STREAM);
+		lps28dfw_fifo_mode_set(&dev_ctx, (lps28dfw_fifo_md_t *) LPS28DFW_STREAM);
 
 		/* Select bus interface */
 		bus_mode.filter = LPS28DFW_AUTO;
@@ -349,7 +368,7 @@ static eCommandResult_T ConsoleCommandBaroData(const char buffer[]){
 		while(HAL_GetTick() < endTick)
 		{
 			lps28dfw_all_sources_get(&dev_ctx, &all_sources);
-			    if ( 1) {//all_sources.drdy_pres | all_sources.drdy_temp ) {
+			    if (all_sources.drdy_pres | all_sources.drdy_temp ) {
 					lps28dfw_data_get(&dev_ctx, &md, &data);
 					sprintf(strbuf, "pressure [hPa]:%6.2f temperature [degC]:%6.2f\r\n", data.pressure.hpa, data.heat.deg_c);
 					ConsoleIoSendString(strbuf);
@@ -358,7 +377,7 @@ static eCommandResult_T ConsoleCommandBaroData(const char buffer[]){
 			    	ConsoleIoSendString(strbuf);
 			    }
 			// Delay for 500 ms
-			HAL_Delay(100);
+			HAL_Delay(500);
 		}
 
 		return COMMAND_SUCCESS;
