@@ -14,6 +14,7 @@
 #include "../Drivers/i3g4250d.h"
 #include "../Drivers/stm32f429i_discovery_gyroscope.h"
 #include "../Drivers/barometer.h"
+#include "../Drivers/accelerometer.h"
 
 
 #define IGNORE_UNUSED_VARIABLE(x)  if ( &x == &x ) {}
@@ -202,6 +203,9 @@ static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]){
 	uint8_t reg;
 	char strbuf[100];
 	memset(strbuf, 0, 100);
+	stmdev_ctx_t dev_ctx;
+
+	dev_ctx = mma8452q_init();
 
 	HAL_I2C_Mem_Read(&I2cHandle, MMA8452Q_DEFAULT_ADDRESS, 0x0D, I2C_MEMADD_SIZE_8BIT, &reg, 1, 1000);
 

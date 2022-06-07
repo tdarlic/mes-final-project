@@ -1,8 +1,66 @@
-#ifndef MMA8452_H
-#define MMA8452_H
+/*
+  ******************************************************************************
+  * @file    mma8452q.h
+  * @author  Tomislav Darlic
+  * @brief   Contains the function prototypes for MMA8452Q
+  * 		 Adapted from Sparkfun MMA8452Q Arduino Library
+  * 		 https://github.com/sparkfun/SparkFun_MMA8452Q_Arduino_Library
+  ******************************************************************************/
+
+/* Define to prevent recursive inclusion -------------------------------------*/
+#ifndef MMA8452Q_H
+#define MMA8452Q_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
 #include <stdbool.h>
 #include <stdint.h>
+
+
+/** @addtogroup  Interfaces_Functions
+  * @brief       This section provide a set of functions used to read and
+  *              write a generic register of the device.
+  *              MANDATORY: return 0 -> no Error.
+  * @{
+  *
+  */
+
+typedef int32_t (*stmdev_write_ptr)(void *, uint8_t, uint8_t *, uint16_t);
+typedef int32_t (*stmdev_read_ptr)(void *, uint8_t, uint8_t *, uint16_t);
+
+typedef struct
+{
+  /** Component mandatory fields **/
+  stmdev_write_ptr  write_reg;
+  stmdev_read_ptr   read_reg;
+  /** Customizable optional pointer **/
+  void *handle;
+} stmdevacc_ctx_t;
+
+/**
+  * @}
+  *
+  */
+
+/** @defgroup LPS28DFW_Infos
+  * @{
+  *
+  */
+
+/** I2C Device Address 8 bit format **/
+#define MMA8452Q_I2C_ADD_L               (0x1CU << 1)
+#define MMA8452Q_I2C_ADD_H               (0x1DU << 1)
+
+/** Device Identification (Who am I) **/
+#define MMA8452Q_ID                      0x2AU
+
+/**
+  * @}
+  *
+  */
 
 ///////////////////////////////////
 // MMA8452Q Register Definitions //
@@ -88,7 +146,7 @@ typedef enum
 #define SYSMOD_WAKE 0b01
 #define SYSMOD_SLEEP 0b10
 
-bool MMA8452Q_init(nrf_drv_twi_t *twi, uint8_t addr, MMA8452Q_Scale fsr, MMA8452Q_ODR odr);
+bool MMA8452Q_init(stmdevacc_ctx_t *ctx, uint8_t addr, MMA8452Q_Scale fsr, MMA8452Q_ODR odr);
 
 void MMA8452Q_read();
 uint8_t MMA8452Q_available();
@@ -118,9 +176,12 @@ void MMA8452Q_setActive();
 bool MMA8452Q_isActive();
 void MMA8452Q_setupPL();
 void MMA8452Q_setupTap(uint8_t xThs, uint8_t yThs, uint8_t zThs);
-bool MMA8452Q_writeRegister(MMA8452Q_Register reg, uint8_t data);
-bool MMA8452Q_readRegister(MMA8452Q_Register reg, uint8_t *dest);
-bool MMA8452Q_readRegisters(MMA8452Q_Register reg, uint8_t *buffer, uint8_t len);
+bool MMA8452Q_writeRegister(stmdevacc_ctx_t *ctx, MMA8452Q_Register reg, uint8_t data);
+bool MMA8452Q_readRegister(stmdevacc_ctx_t *ctx, MMA8452Q_Register reg, uint8_t *dest);
+bool MMA8452Q_readRegisters(stmdevacc_ctx_t *ctx, MMA8452Q_Register reg, uint8_t *buffer, uint8_t len);
 
+#ifdef __cplusplus
+}
 #endif
 
+#endif /* MMA8452Q_H */

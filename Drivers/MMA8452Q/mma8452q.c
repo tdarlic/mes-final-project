@@ -1,25 +1,89 @@
+/*
+  ******************************************************************************
+  * @file    mma8452q.h
+  * @author  Tomislav Darlic
+  * @brief   Adapted from Sparkfun MMA8452Q Arduino Library
+  * 		 https://github.com/sparkfun/SparkFun_MMA8452Q_Arduino_Library
+  ******************************************************************************/
+
 #include "mma8452q.h"
 
-#include "app_error.h"
-
-static nrf_drv_twi_t *m_twi;
 static uint8_t m_deviceAddress;
 
 MMA8452Q_Scale m_scale;
 static uint16_t x, y, z;
 static float cx, cy, cz;
+
+
+/**
+  * @defgroup    LPS28DFW
+  * @brief       This file provides a set of functions needed to drive the
+  *              lps28dfw nano pressure sensor.
+  * @{
+  *
+  */
+
+/**
+  * @defgroup    Interfaces_Functions
+  * @brief       This section provide a set of functions used to read and
+  *              write a generic register of the device.
+  *              MANDATORY: return 0 -> no Error.
+  * @{
+  *
+  */
+
+/**
+  * @brief  Read generic device register
+  *
+  * @param  ctx   read / write interface definitions(ptr)
+  * @param  reg   register to read
+  * @param  data  pointer to buffer that store the data read(ptr)
+  * @param  len   number of consecutive register to read
+  * @retval       interface status (MANDATORY: return 0 -> no Error)
+  *
+  */
+int32_t MMA8452Q_read_reg(stmdevacc_ctx_t *ctx, uint8_t reg, uint8_t *data, uint16_t len)
+{
+  int32_t ret;
+  ret = ctx->read_reg(ctx->handle, reg, data, len);
+  return ret;
+}
+
+/**
+  * @brief  Write generic device register
+  *
+  * @param  ctx   read / write interface definitions(ptr)
+  * @param  reg   register to write
+  * @param  data  pointer to data to write in register reg(ptr)
+  * @param  len   number of consecutive register to write
+  * @retval       interface status (MANDATORY: return 0 -> no Error)
+  *
+  */
+int32_t MMA8452Q_write_reg(stmdevacc_ctx_t *ctx, uint8_t reg, uint8_t *data, uint16_t len)
+{
+  int32_t ret;
+  ret = ctx->write_reg(ctx->handle, reg, data, len);
+  return ret;
+}
+
+/**
+  * @}
+  *
+  */
+
+
+
 // BEGIN INITIALIZATION (New Implementation of Init)
 // 	This will be used instead of init in future sketches
 // 	to match Arudino guidelines. We will maintain init
 // 	for backwards compatability purposes.
-bool MMA8452Q_init(nrf_drv_twi_t *twi, uint8_t deviceAddress, MMA8452Q_Scale fsr, MMA8452Q_ODR odr)
+bool MMA8452Q_init(stmdevacc_ctx_t *ctx, uint8_t deviceAddress, MMA8452Q_Scale fsr, MMA8452Q_ODR odr)
 {
-    m_twi = twi;
     m_deviceAddress = deviceAddress;
     m_scale = fsr;
 
     uint8_t tmp;
-    if (!MMA8452Q_readRegister(WHO_AM_I, &tmp) || tmp != 0x2A)
+    if (!MMA8452Q_readRegister(ctx, WHO_AM_I, &tmp) || tmp != 0x2A)
         return false;
 
     MMA8452Q_standby(); // Must be in standby to change registers
@@ -321,47 +385,28 @@ bool MMA8452Q_isActive()
 
 // WRITE A SINGLE REGISTER
 // 	Write a single uint8_t of data to a register in the MMA8452Q.
-bool MMA8452Q_writeRegister(MMA8452Q_Register regAddress, uint8_t data)
+bool MMA8452Q_writeRegister(stmdevacc_ctx_t * ctx, MMA8452Q_Register regAddress, uint8_t data)
 {
-    ret_code_t err_code;
-    uint8_t buffer[2] = {regAddress, data};
-    err_code = nrf_drv_twi_tx(m_twi, m_deviceAddress, buffer, 2, false);
-    APP_ERROR_CHECK(err_code);
-    return (err_code == 0);
+    int32_t ret;
+    ret = ctx->write_reg(ctx->handle, regAddress, data, 1);
+    return true;
 }
 
 // READ A SINGLE REGISTER
 //	Read a uint8_t from the MMA8452Q register "reg".
-bool MMA8452Q_readRegister(MMA8452Q_Register regAddress, uint8_t *dest)
+bool MMA8452Q_readRegister(stmdevacc_ctx_t * ctx, MMA8452Q_Register regAddress, uint8_t *dest)
 {
-    ret_code_t err_code;
-    uint8_t txBuffer[1] = {regAddress};
-    err_code = nrf_drv_twi_tx(m_twi, m_deviceAddress, txBuffer, 1, true);
-    APP_ERROR_CHECK(err_code);
-
-    if (err_code != 0)
-        return false;
-
-    err_code = nrf_drv_twi_rx(m_twi, m_deviceAddress, dest, 1);
-    APP_ERROR_CHECK(err_code);
-    return (err_code == 0);
+	int32_t ret;
+	ret = ctx->read_reg(ctx->handle, regAddress, dest, 1);
+	return true;
 }
 
 // READ MULTIPLE REGISTERS
 //	Read "len" uint8_ts from the MMA8452Q, starting at register "reg". uint8_ts are stored
 //	in "buffer" on exit.
-bool MMA8452Q_readRegisters(MMA8452Q_Register regAddress, uint8_t *buffer, uint8_t len)
+bool MMA8452Q_readRegisters(stmdevacc_ctx_t * ctx, MMA8452Q_Register regAddress, uint8_t *buffer, uint8_t len)
 {
-    ret_code_t err_code;
-    uint8_t txBuffer[1] = {regAddress};
-    err_code = nrf_drv_twi_tx(m_twi, m_deviceAddress, txBuffer, 1, false);
-    APP_ERROR_CHECK(err_code);
-
-    if (err_code != 0) {
-        return false;
-    }
-
-    err_code = nrf_drv_twi_rx(m_twi, m_deviceAddress, buffer, len);
-    APP_ERROR_CHECK(err_code);
-    return (err_code == 0);
+	int32_t ret;
+	ret = ctx->read_reg(ctx->handle, regAddress, buffer, len);
+	return true;
 }
