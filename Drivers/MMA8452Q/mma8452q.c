@@ -77,72 +77,71 @@ int32_t MMA8452Q_write_reg(stmdevacc_ctx_t *ctx, uint8_t reg, uint8_t *data, uin
 // 	This will be used instead of init in future sketches
 // 	to match Arudino guidelines. We will maintain init
 // 	for backwards compatability purposes.
-bool MMA8452Q_init(stmdevacc_ctx_t *ctx, uint8_t deviceAddress, MMA8452Q_Scale fsr, MMA8452Q_ODR odr)
+bool MMA8452Q_init_set(stmdevacc_ctx_t *ctx, MMA8452Q_Scale fsr, MMA8452Q_ODR odr)
 {
-    m_deviceAddress = deviceAddress;
     m_scale = fsr;
 
     uint8_t tmp;
     if (!MMA8452Q_readRegister(ctx, WHO_AM_I, &tmp) || tmp != 0x2A)
         return false;
 
-    MMA8452Q_standby(); // Must be in standby to change registers
+    MMA8452Q_standby(ctx); // Must be in standby to change registers
 
-    MMA8452Q_setScale(m_scale);  // Set up accelerometer scale
-    MMA8452Q_setDataRate(odr); // Set up output data rate
-    MMA8452Q_setupPL();		  // Set up portrait/landscape detection
+    MMA8452Q_setScale(ctx, m_scale);  // Set up accelerometer scale
+    MMA8452Q_setDataRate(ctx, odr); // Set up output data rate
+    MMA8452Q_setupPL(ctx);		  // Set up portrait/landscape detection
 
     // Multiply parameter by 0.0625g to calculate threshold.
-    MMA8452Q_setupTap(0x80, 0x80, 0x08); // Disable x, y, set z to 0.5g
+    MMA8452Q_setupTap(ctx, 0x80, 0x80, 0x08); // Disable x, y, set z to 0.5g
 
-    MMA8452Q_setActive(); // Set to active to start reading
+    MMA8452Q_setActive(ctx); // Set to active to start reading
     return true;
 }
 
 // GET FUNCTIONS FOR RAW ACCELERATION DATA
 // Returns raw X acceleration data
-uint16_t MMA8452Q_getX()
+uint16_t MMA8452Q_getX(stmdevacc_ctx_t *ctx)
 {
     uint8_t rawData[2];
-    MMA8452Q_readRegisters(OUT_X_MSB, rawData, 2); // Read the X data into a data array
+    MMA8452Q_readRegisters(ctx, OUT_X_MSB, rawData, 2); // Read the X data into a data array
     return (((uint16_t)(rawData[0] << 8 | rawData[1])) >> 4);
 }
 
 // Returns raw Y acceleration data
-uint16_t MMA8452Q_getY()
+uint16_t MMA8452Q_getY(stmdevacc_ctx_t *ctx)
 {
     uint8_t rawData[2];
-    MMA8452Q_readRegisters(OUT_Y_MSB, rawData, 2); // Read the Y data into a data array
+    MMA8452Q_readRegisters(ctx, OUT_Y_MSB, rawData, 2); // Read the Y data into a data array
     return (((uint16_t)(rawData[0] << 8 | rawData[1])) >> 4);
 }
 
 // Returns raw Z acceleration data
-uint16_t MMA8452Q_getZ()
+uint16_t MMA8452Q_getZ(stmdevacc_ctx_t *ctx)
 {
     uint8_t rawData[2];
-    MMA8452Q_readRegisters(OUT_Z_MSB, rawData, 2); // Read the Z data into a data array
+    MMA8452Q_readRegisters(ctx, OUT_Z_MSB, rawData, 2); // Read the Z data into a data array
     return (((uint16_t)(rawData[0] << 8 | rawData[1])) >> 4);
 }
 
 // GET FUNCTIONS FOR CALCULATED ACCELERATION DATA
 // Returns calculated X acceleration data
-float MMA8452Q_getCalculatedX()
+float MMA8452Q_getCalculatedX(stmdevacc_ctx_t *ctx)
 {
-    x = MMA8452Q_getX();
+    x = MMA8452Q_getX(ctx);
     return (float)x / (float)(1 << 11) * (float)(m_scale);
 }
 
 // Returns calculated Y acceleration data
-float MMA8452Q_getCalculatedY()
+float MMA8452Q_getCalculatedY(stmdevacc_ctx_t *ctx)
 {
-    y = MMA8452Q_getY();
+    y = MMA8452Q_getY(ctx);
     return ((float)y / (float)(1 << 11) * (float)(m_scale));
 }
 
 // Returns calculated Z acceleration data
-float MMA8452Q_getCalculatedZ()
+float MMA8452Q_getCalculatedZ(stmdevacc_ctx_t *ctx)
 {
-    z = MMA8452Q_getZ();
+    z = MMA8452Q_getZ(ctx);
     return ((float)z / (float)(1 << 11) * (float)(m_scale));
 }
 
@@ -153,10 +152,10 @@ float MMA8452Q_getCalculatedZ()
 //		  of the acceleromter.
 //		* floats cx, cy, and cz will store the calculated acceleration from
 //		  those 12-bit values. These variables are in units of g's.
-void MMA8452Q_read()
+void MMA8452Q_read(stmdevacc_ctx_t *ctx)
 {
     uint8_t rawData[6]; // x/y/z accel register data stored here
-    MMA8452Q_readRegisters(OUT_X_MSB, rawData, 6); // Read the six raw data registers into data array
+    MMA8452Q_readRegisters(ctx, OUT_X_MSB, rawData, 6); // Read the six raw data registers into data array
 
     x = ((uint16_t)(rawData[0] << 8 | rawData[1])) >> 4;
     y = ((uint16_t)(rawData[2] << 8 | rawData[3])) >> 4;
@@ -169,33 +168,33 @@ void MMA8452Q_read()
 // CHECK IF NEW DATA IS AVAILABLE
 //	This function checks the status of the MMA8452Q to see if new data is availble.
 //	returns 0 if no new data is present, or a 1 if new data is available.
-uint8_t MMA8452Q_available()
+uint8_t MMA8452Q_available(stmdevacc_ctx_t *ctx)
 {
     uint8_t tmp;
-    MMA8452Q_readRegister(STATUS_MMA8452Q, &tmp);
+    MMA8452Q_readRegister(ctx, STATUS_MMA8452Q, &tmp);
     return ((tmp & 0x08) >> 3);
 }
 
 // SET FULL-SCALE RANGE
 //	This function sets the full-scale range of the x, y, and z axis accelerometers.
 //	Possible values for the fsr variable are SCALE_2G, SCALE_4G, or SCALE_8G.
-void MMA8452Q_setScale(MMA8452Q_Scale fsr)
+void MMA8452Q_setScale(stmdevacc_ctx_t *ctx, MMA8452Q_Scale fsr)
 {
     // Must be in standby mode to make changes!!!
     // Change to standby if currently in active state
-    if (MMA8452Q_isActive() == true)
-        MMA8452Q_standby();
+    if (MMA8452Q_isActive(ctx) == true)
+        MMA8452Q_standby(ctx);
 
     uint8_t cfg;
-    if (!MMA8452Q_readRegister(XYZ_DATA_CFG, &cfg))
+    if (!MMA8452Q_readRegister(ctx, XYZ_DATA_CFG, &cfg))
         return;
     cfg &= 0xFC;	   // Mask out scale bits
     cfg |= (fsr >> 2); // Neat trick, see page 22. 00 = 2G, 01 = 4A, 10 = 8G
-    MMA8452Q_writeRegister(XYZ_DATA_CFG, cfg);
+    MMA8452Q_writeRegister(ctx, XYZ_DATA_CFG, cfg);
 
     // Return to active state when done
     // Must be in active state to read data
-    MMA8452Q_setActive();
+    MMA8452Q_setActive(ctx);
 
     m_scale = fsr;
 }
@@ -204,22 +203,22 @@ void MMA8452Q_setScale(MMA8452Q_Scale fsr)
 //	This function sets the output data rate of the MMA8452Q.
 //	Possible values for the odr parameter are: ODR_800, ODR_400, ODR_200,
 //	ODR_100, ODR_50, ODR_12, ODR_6, or ODR_1
-void MMA8452Q_setDataRate(MMA8452Q_ODR odr)
+void MMA8452Q_setDataRate(stmdevacc_ctx_t *ctx, MMA8452Q_ODR odr)
 {
     // Must be in standby mode to make changes!!!
     // Change to standby if currently in active state
-    if (MMA8452Q_isActive() == true)
-        MMA8452Q_standby();
+    if (MMA8452Q_isActive(ctx) == true)
+        MMA8452Q_standby(ctx);
 
     uint8_t ctrl;
-    MMA8452Q_readRegister(CTRL_REG1, &ctrl);
+    MMA8452Q_readRegister(ctx, CTRL_REG1, &ctrl);
     ctrl &= 0xC7; // Mask out data rate bits
     ctrl |= (odr << 3);
-    MMA8452Q_writeRegister(CTRL_REG1, ctrl);
+    MMA8452Q_writeRegister(ctx, CTRL_REG1, ctrl);
 
     // Return to active state when done
     // Must be in active state to read data
-    MMA8452Q_setActive();
+    MMA8452Q_setActive(ctx);
 }
 
 // SET UP TAP DETECTION
@@ -229,12 +228,12 @@ void MMA8452Q_setDataRate(MMA8452Q_ODR odr)
 //			tap detection on that axis will be DISABLED.
 //		2. Set tap g's threshold. The lower 7 bits will set the tap threshold
 //			on that axis.
-void MMA8452Q_setupTap(uint8_t xThs, uint8_t yThs, uint8_t zThs)
+void MMA8452Q_setupTap(stmdevacc_ctx_t *ctx, uint8_t xThs, uint8_t yThs, uint8_t zThs)
 {
     // Must be in standby mode to make changes!!!
     // Change to standby if currently in active state
-    if (MMA8452Q_isActive() == true)
-        MMA8452Q_standby();
+    if (MMA8452Q_isActive(ctx) == true)
+        MMA8452Q_standby(ctx);
 
     // Set up single and double tap - 5 steps:
     // for more info check out this app note:
@@ -244,41 +243,41 @@ void MMA8452Q_setupTap(uint8_t xThs, uint8_t yThs, uint8_t zThs)
     // If top bit ISN'T set
     if (!(xThs & 0x80)) {
         temp |= 0x3;					 // Enable taps on x
-        MMA8452Q_writeRegister(PULSE_THSX, xThs); // x thresh
+        MMA8452Q_writeRegister(ctx, PULSE_THSX, xThs); // x thresh
     }
 
     if (!(yThs & 0x80)) {
         temp |= 0xC;					 // Enable taps on y
-        MMA8452Q_writeRegister(PULSE_THSY, yThs); // y thresh
+        MMA8452Q_writeRegister(ctx, PULSE_THSY, yThs); // y thresh
     }
 
     if (!(zThs & 0x80)) {
         temp |= 0x30;					 // Enable taps on z
-        MMA8452Q_writeRegister(PULSE_THSZ, zThs); // z thresh
+        MMA8452Q_writeRegister(ctx, PULSE_THSZ, zThs); // z thresh
     }
     // Set up single and/or double tap detection on each axis individually.
-    MMA8452Q_writeRegister(PULSE_CFG, temp | 0x40);
+    MMA8452Q_writeRegister(ctx, PULSE_CFG, temp | 0x40);
     // Set the time limit - the maximum time that a tap can be above the thresh
-    MMA8452Q_writeRegister(PULSE_TMLT, 0x30); // 30ms time limit at 800Hz odr
+    MMA8452Q_writeRegister(ctx, PULSE_TMLT, 0x30); // 30ms time limit at 800Hz odr
     // Set the pulse latency - the minimum required time between pulses
-    MMA8452Q_writeRegister(PULSE_LTCY, 0xA0); // 200ms (at 800Hz odr) between taps min
+    MMA8452Q_writeRegister(ctx, PULSE_LTCY, 0xA0); // 200ms (at 800Hz odr) between taps min
     // Set the second pulse window - maximum allowed time between end of
     //	latency and start of second pulse
-    MMA8452Q_writeRegister(PULSE_WIND, 0xFF); // 5. 318ms (max value) between taps max
+    MMA8452Q_writeRegister(ctx, PULSE_WIND, 0xFF); // 5. 318ms (max value) between taps max
 
     // Return to active state when done
     // Must be in active state to read data
-    MMA8452Q_setActive();
+    MMA8452Q_setActive(ctx);
 }
 
 // READ TAP STATUS
 //	This function returns any taps read by the MMA8452Q. If the function
 //	returns no new taps were detected. Otherwise the function will return the
 //	lower 7 bits of the PULSE_SRC register.
-uint8_t MMA8452Q_readTap()
+uint8_t MMA8452Q_readTap(stmdevacc_ctx_t *ctx)
 {
     uint8_t tapStat;
-    if (MMA8452Q_readRegister(PULSE_SRC, &tapStat)) {
+    if (MMA8452Q_readRegister(ctx, PULSE_SRC, &tapStat)) {
         if (tapStat & 0x80) // Read EA bit to check if a interrupt was generated
             return tapStat & 0x7F;
         else
@@ -289,35 +288,35 @@ uint8_t MMA8452Q_readTap()
 
 // SET UP PORTRAIT/LANDSCAPE DETECTION
 //	This function sets up portrait and landscape detection.
-void MMA8452Q_setupPL()
+void MMA8452Q_setupPL(stmdevacc_ctx_t *ctx)
 {
     // Must be in standby mode to make changes!!!
     // Change to standby if currently in active state
-    if (MMA8452Q_isActive())
-        MMA8452Q_standby();
+    if (MMA8452Q_isActive(ctx))
+        MMA8452Q_standby(ctx);
 
     // For more info check out this app note:
     //	http://cache.freescale.com/files/sensors/doc/app_note/AN4068.pdf
     // 1. Enable P/L
     uint8_t pl;
-    MMA8452Q_readRegister(PL_CFG, &pl);
-    MMA8452Q_writeRegister(PL_CFG, pl | 0x40); // Set PL_EN (enable)
+    MMA8452Q_readRegister(ctx, PL_CFG, &pl);
+    MMA8452Q_writeRegister(ctx, PL_CFG, pl | 0x40); // Set PL_EN (enable)
     // 2. Set the debounce rate
-    MMA8452Q_writeRegister(PL_COUNT, 0x50); // Debounce counter at 100ms (at 800 hz)
+    MMA8452Q_writeRegister(ctx, PL_COUNT, 0x50); // Debounce counter at 100ms (at 800 hz)
 
     // Return to active state when done
     // Must be in active state to read data
-    MMA8452Q_setActive();
+    MMA8452Q_setActive(ctx);
 }
 
 // READ PORTRAIT/LANDSCAPE STATUS
 //	This function reads the portrait/landscape status register of the MMA8452Q.
 //	It will return either PORTRAIT_U, PORTRAIT_D, LANDSCAPE_R, LANDSCAPE_L,
 //	or LOCKOUT. LOCKOUT indicates that the sensor is in neither p or ls.
-uint8_t MMA8452Q_readPL()
+uint8_t MMA8452Q_readPL(stmdevacc_ctx_t *ctx)
 {
     uint8_t plStat;
-    if (MMA8452Q_readRegister(PL_STATUS, &plStat)) {
+    if (MMA8452Q_readRegister(ctx, PL_STATUS, &plStat)) {
         if (plStat & 0x40) // Z-tilt lockout
             return LOCKOUT;
         else // Otherwise return LAPO status
@@ -327,57 +326,57 @@ uint8_t MMA8452Q_readPL()
 }
 
 // CHECK FOR ORIENTATION
-bool MMA8452Q_isRight()
+bool MMA8452Q_isRight(stmdevacc_ctx_t *ctx)
 {
-    return (MMA8452Q_readPL() == LANDSCAPE_R);
+    return (MMA8452Q_readPL(ctx) == LANDSCAPE_R);
 }
 
-bool MMA8452Q_isLeft()
+bool MMA8452Q_isLeft(stmdevacc_ctx_t *ctx)
 {
-    return (MMA8452Q_readPL() == LANDSCAPE_L);
+    return (MMA8452Q_readPL(ctx) == LANDSCAPE_L);
 }
 
-bool MMA8452Q_isUp()
+bool MMA8452Q_isUp(stmdevacc_ctx_t *ctx)
 {
-    return (MMA8452Q_readPL() == PORTRAIT_U);
+    return (MMA8452Q_readPL(ctx) == PORTRAIT_U);
 }
 
-bool MMA8452Q_isDown()
+bool MMA8452Q_isDown(stmdevacc_ctx_t *ctx)
 {
-    return (MMA8452Q_readPL() == PORTRAIT_D);
+    return (MMA8452Q_readPL(ctx) == PORTRAIT_D);
 }
 
-bool MMA8452Q_isFlat()
+bool MMA8452Q_isFlat(stmdevacc_ctx_t *ctx)
 {
-    if (MMA8452Q_readPL() == LOCKOUT)
+    if (MMA8452Q_readPL(ctx) == LOCKOUT)
         return true;
     return false;
 }
 
 // SET STANDBY MODE
 //	Sets the MMA8452 to standby mode. It must be in standby to change most register settings
-void MMA8452Q_standby()
+void MMA8452Q_standby(stmdevacc_ctx_t *ctx)
 {
     uint8_t c;
-    if (MMA8452Q_readRegister(CTRL_REG1, &c))
-        MMA8452Q_writeRegister(CTRL_REG1, c & ~(0x01)); //Clear the active bit to go into standby
+    if (MMA8452Q_readRegister(ctx, CTRL_REG1, &c))
+        MMA8452Q_writeRegister(ctx, CTRL_REG1, c & ~(0x01)); //Clear the active bit to go into standby
 }
 
 // SET ACTIVE MODE
 //	Sets the MMA8452 to active mode. Needs to be in this mode to output data
-void MMA8452Q_setActive()
+void MMA8452Q_setActive(stmdevacc_ctx_t *ctx)
 {
     uint8_t c;
-    if (MMA8452Q_readRegister(CTRL_REG1, &c))
-        MMA8452Q_writeRegister(CTRL_REG1, c | 0x01); //Set the active bit to begin detection
+    if (MMA8452Q_readRegister(ctx, CTRL_REG1, &c))
+        MMA8452Q_writeRegister(ctx, CTRL_REG1, c | 0x01); //Set the active bit to begin detection
 }
 
 // CHECK STATE (ACTIVE or STANDBY)
 //	Returns true if in Active State, otherwise return false
-bool MMA8452Q_isActive()
+bool MMA8452Q_isActive(stmdevacc_ctx_t *ctx)
 {
     uint8_t currentState;
-    if (MMA8452Q_readRegister(SYSMOD, &currentState)) {
+    if (MMA8452Q_readRegister(ctx, SYSMOD, &currentState)) {
         return ((currentState & 0b11) == SYSMOD_STANDBY);
     }
     return false;

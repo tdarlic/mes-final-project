@@ -8,13 +8,13 @@
 #include "../hal_stm_lvgl/stm32f429i_discovery.h"
 #include "accelerometer.h"
 
-stmdev_ctx_t acc_ctx;
+stmdevacc_ctx_t acc_ctx;
 
 
 static int32_t platform_write(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len);
 static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len);
 
-stmdev_ctx_t mma8452q_init(void){
+stmdevacc_ctx_t mma8452q_init(void){
 	  /* Initialize mems driver interface */
 	acc_ctx.write_reg = platform_write;
 	acc_ctx.read_reg = platform_read;
@@ -35,7 +35,7 @@ stmdev_ctx_t mma8452q_init(void){
  */
 static int32_t platform_write(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len)
 {
-  HAL_I2C_Mem_Write(handle, LPS28DFW_I2C_ADD_H, reg, I2C_MEMADD_SIZE_8BIT, bufp, len, 1000);
+  HAL_I2C_Mem_Write(handle, MMA8452Q_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, bufp, len, 1000);
   return 0;
 }
 
@@ -51,6 +51,6 @@ static int32_t platform_write(void *handle, uint8_t reg, uint8_t *bufp, uint16_t
  */
 static int32_t platform_read(void *handle, uint8_t reg, uint8_t *bufp, uint16_t len)
 {
-  HAL_I2C_Mem_Read(handle, LPS28DFW_I2C_ADD_H, reg, I2C_MEMADD_SIZE_8BIT, bufp, len, 1000);
+  HAL_I2C_Mem_Read(handle, MMA8452Q_I2C_ADD_L, reg, I2C_MEMADD_SIZE_8BIT, bufp, len, 1000);
   return 0;
 }

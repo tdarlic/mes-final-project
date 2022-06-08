@@ -199,17 +199,18 @@ static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]){
  * Testing is accelerometer present
  */
 static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]){
-	//HAL_I2C_Mem_Read(&I2cHandle, LPS28DFW_I2C_ADD_H, reg, I2C_MEMADD_SIZE_8BIT, bufp, len, 1000);
 	uint8_t reg;
 	char strbuf[100];
 	memset(strbuf, 0, 100);
-	stmdev_ctx_t dev_ctx;
+	stmdevacc_ctx_t dev_ctx;
 
 	dev_ctx = mma8452q_init();
 
-	HAL_I2C_Mem_Read(&I2cHandle, MMA8452Q_DEFAULT_ADDRESS, 0x0D, I2C_MEMADD_SIZE_8BIT, &reg, 1, 1000);
-
-	sprintf(strbuf, "ACC ID returned: 0x%X\r\n", reg);
+	if (MMA8452Q_init_set(&dev_ctx, SCALE_2G, ODR_12)){
+		sprintf(strbuf, "Accelerometer initialized\r\n", reg);
+	} else {
+		sprintf(strbuf, "Accelerometer failed\r\n", reg);
+	}
 	ConsoleIoSendString(strbuf);
 
 	return COMMAND_SUCCESS;

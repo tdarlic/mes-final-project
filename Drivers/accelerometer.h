@@ -19,7 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "MMA8452Q/mma8452q.h"
 
-stmdev_ctx_t mma8452q_init(void);
+stmdevacc_ctx_t mma8452q_init(void);
 
 
 #ifdef __cplusplus

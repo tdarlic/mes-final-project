@@ -146,36 +146,36 @@ typedef enum
 #define SYSMOD_WAKE 0b01
 #define SYSMOD_SLEEP 0b10
 
-bool MMA8452Q_init(stmdevacc_ctx_t *ctx, uint8_t addr, MMA8452Q_Scale fsr, MMA8452Q_ODR odr);
+bool MMA8452Q_init_set(stmdevacc_ctx_t *ctx, MMA8452Q_Scale fsr, MMA8452Q_ODR odr);
 
-void MMA8452Q_read();
-uint8_t MMA8452Q_available();
-uint8_t MMA8452Q_readTap();
-uint8_t MMA8452Q_readPL();
+void MMA8452Q_read(stmdevacc_ctx_t *ctx);
+uint8_t MMA8452Q_available(stmdevacc_ctx_t *ctx);
+uint8_t MMA8452Q_readTap(stmdevacc_ctx_t *ctx);
+uint8_t MMA8452Q_readPL(stmdevacc_ctx_t *ctx);
 
 
-uint16_t MMA8452Q_getX();
-uint16_t MMA8452Q_getY();
-uint16_t MMA8452Q_getZ();
+uint16_t MMA8452Q_getX(stmdevacc_ctx_t *ctx);
+uint16_t MMA8452Q_getY(stmdevacc_ctx_t *ctx);
+uint16_t MMA8452Q_getZ(stmdevacc_ctx_t *ctx);
 
-float MMA8452Q_getCalculatedX();
+float MMA8452Q_getCalculatedX(stmdevacc_ctx_t *ctx);
 float MMA8452Q_getCalculatedY();
 float MMA8452Q_getCalculatedZ();
 
-bool isRight();
-bool isLeft();
-bool isUp();
-bool isDown();
-bool isFlat();
+bool isRight(stmdevacc_ctx_t *ctx);
+bool isLeft(stmdevacc_ctx_t *ctx);
+bool isUp(stmdevacc_ctx_t *ctx);
+bool isDown(stmdevacc_ctx_t *ctx);
+bool isFlat(stmdevacc_ctx_t *ctx);
 
-void MMA8452Q_setScale(MMA8452Q_Scale fsr);
-void MMA8452Q_setDataRate(MMA8452Q_ODR odr);
+void MMA8452Q_setScale(stmdevacc_ctx_t *ctx, MMA8452Q_Scale fsr);
+void MMA8452Q_setDataRate(stmdevacc_ctx_t *ctx, MMA8452Q_ODR odr);
 
-void MMA8452Q_standby();
-void MMA8452Q_setActive();
-bool MMA8452Q_isActive();
-void MMA8452Q_setupPL();
-void MMA8452Q_setupTap(uint8_t xThs, uint8_t yThs, uint8_t zThs);
+void MMA8452Q_standby(stmdevacc_ctx_t *ctx);
+void MMA8452Q_setActive(stmdevacc_ctx_t *ctx);
+bool MMA8452Q_isActive(stmdevacc_ctx_t *ctx);
+void MMA8452Q_setupPL(stmdevacc_ctx_t *ctx);
+void MMA8452Q_setupTap(stmdevacc_ctx_t *ctx, uint8_t xThs, uint8_t yThs, uint8_t zThs);
 bool MMA8452Q_writeRegister(stmdevacc_ctx_t *ctx, MMA8452Q_Register reg, uint8_t data);
 bool MMA8452Q_readRegister(stmdevacc_ctx_t *ctx, MMA8452Q_Register reg, uint8_t *dest);
 bool MMA8452Q_readRegisters(stmdevacc_ctx_t *ctx, MMA8452Q_Register reg, uint8_t *buffer, uint8_t len);
