@@ -62,6 +62,17 @@ typedef struct
   *
   */
 
+/**
+ * Structure holding the accelerometer calculated data
+ */
+typedef struct _ACC_DATA {
+	float x, y, z;
+} ACC_DATA;
+
+typedef struct _ACC_RAW_DATA {
+	uint16_t x, y, z;
+} ACC_RAW_DATA;
+
 ///////////////////////////////////
 // MMA8452Q Register Definitions //
 ///////////////////////////////////
@@ -148,7 +159,7 @@ typedef enum
 
 bool MMA8452Q_init_set(stmdevacc_ctx_t *ctx, MMA8452Q_Scale fsr, MMA8452Q_ODR odr);
 
-void MMA8452Q_read(stmdevacc_ctx_t *ctx);
+void MMA8452Q_read(stmdevacc_ctx_t *ctx, ACC_DATA * acdt);
 uint8_t MMA8452Q_available(stmdevacc_ctx_t *ctx);
 uint8_t MMA8452Q_readTap(stmdevacc_ctx_t *ctx);
 uint8_t MMA8452Q_readPL(stmdevacc_ctx_t *ctx);

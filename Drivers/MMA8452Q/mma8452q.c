@@ -8,8 +8,6 @@
 
 #include "mma8452q.h"
 
-static uint8_t m_deviceAddress;
-
 MMA8452Q_Scale m_scale;
 static uint16_t x, y, z;
 static float cx, cy, cz;
@@ -152,7 +150,7 @@ float MMA8452Q_getCalculatedZ(stmdevacc_ctx_t *ctx)
 //		  of the acceleromter.
 //		* floats cx, cy, and cz will store the calculated acceleration from
 //		  those 12-bit values. These variables are in units of g's.
-void MMA8452Q_read(stmdevacc_ctx_t *ctx)
+void MMA8452Q_read(stmdevacc_ctx_t *ctx, ACC_DATA * acdt)
 {
     uint8_t rawData[6]; // x/y/z accel register data stored here
     MMA8452Q_readRegisters(ctx, OUT_X_MSB, rawData, 6); // Read the six raw data registers into data array
@@ -163,6 +161,9 @@ void MMA8452Q_read(stmdevacc_ctx_t *ctx)
     cx = (float)x / (float)(1 << 11) * (float)(m_scale);
     cy = (float)y / (float)(1 << 11) * (float)(m_scale);
     cz = (float)z / (float)(1 << 11) * (float)(m_scale);
+    acdt->x = cx;
+    acdt->y = cy;
+    acdt->z = cz;
 }
 
 // CHECK IF NEW DATA IS AVAILABLE
@@ -386,8 +387,7 @@ bool MMA8452Q_isActive(stmdevacc_ctx_t *ctx)
 // 	Write a single uint8_t of data to a register in the MMA8452Q.
 bool MMA8452Q_writeRegister(stmdevacc_ctx_t * ctx, MMA8452Q_Register regAddress, uint8_t data)
 {
-    int32_t ret;
-    ret = ctx->write_reg(ctx->handle, regAddress, data, 1);
+    ctx->write_reg(ctx->handle, regAddress, &data, 1);
     return true;
 }
 
@@ -395,8 +395,7 @@ bool MMA8452Q_writeRegister(stmdevacc_ctx_t * ctx, MMA8452Q_Register regAddress,
 //	Read a uint8_t from the MMA8452Q register "reg".
 bool MMA8452Q_readRegister(stmdevacc_ctx_t * ctx, MMA8452Q_Register regAddress, uint8_t *dest)
 {
-	int32_t ret;
-	ret = ctx->read_reg(ctx->handle, regAddress, dest, 1);
+	ctx->read_reg(ctx->handle, regAddress, dest, 1);
 	return true;
 }
 
@@ -405,7 +404,6 @@ bool MMA8452Q_readRegister(stmdevacc_ctx_t * ctx, MMA8452Q_Register regAddress, 
 //	in "buffer" on exit.
 bool MMA8452Q_readRegisters(stmdevacc_ctx_t * ctx, MMA8452Q_Register regAddress, uint8_t *buffer, uint8_t len)
 {
-	int32_t ret;
-	ret = ctx->read_reg(ctx->handle, regAddress, buffer, len);
+	ctx->read_reg(ctx->handle, regAddress, buffer, len);
 	return true;
 }

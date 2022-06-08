@@ -34,6 +34,7 @@ static eCommandResult_T ConsoleCommandBaroPresent(const char buffer[]);
 static eCommandResult_T ConsoleCommandBaroData(const char buffer[]);
 static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]);
 static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]);
+static eCommandResult_T ConsoleCommandAccData(const char buffer[]);
 
 static const sConsoleCommandTable_T mConsoleCommandTable[] =
 {
@@ -46,6 +47,7 @@ static const sConsoleCommandTable_T mConsoleCommandTable[] =
 	{"bd", &ConsoleCommandBaroData, HELP("Get barometer data: params 10 - number of seconds to test")},
 	{"br", &ConsoleCommandBaroReset, HELP("Reset barometer")},
 	{"ap", &ConsoleCommandAccPresent, HELP("Check is accelerometer present and responding")},
+	{"ad", &ConsoleCommandAccData, HELP("Get accelerometer data: params 10 - number of seconds to test")},
 
 	CONSOLE_COMMAND_TABLE_END // must be LAST
 };
@@ -193,8 +195,6 @@ static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]){
 	return COMMAND_SUCCESS;
 }
 
-#define MMA8452Q_DEFAULT_ADDRESS (0x1C << 1)
-
 /**
  * Testing is accelerometer present
  */
@@ -213,6 +213,49 @@ static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]){
 	}
 	ConsoleIoSendString(strbuf);
 
+	return COMMAND_SUCCESS;
+}
+
+/**
+ *Testing output of accelerometer
+ */
+static eCommandResult_T ConsoleCommandAccData(const char buffer[]){
+	ACC_DATA acdt;
+	int16_t tsec;
+	char linebuf[120];
+	eCommandResult_T result;
+	stmdevacc_ctx_t dev_ctx;
+	uint32_t endTick = 0;
+
+	result = ConsoleReceiveParamInt16(buffer, 1, &tsec);
+	if (COMMAND_SUCCESS == result ){
+
+		if (tsec < 1){
+			ConsoleIoSendString("Error in duration of test: < 1");
+			return COMMAND_PARAMETER_ERROR;
+		}
+
+		dev_ctx = mma8452q_init();
+
+		if (MMA8452Q_init_set(&dev_ctx, SCALE_4G, ODR_12)){
+			sprintf(linebuf, "Accelerometer initialized\r\n");
+		} else {
+			sprintf(linebuf, "Accelerometer failed\r\n");
+			return COMMAND_ERROR;
+		}
+		ConsoleIoSendString(linebuf);
+		//function will exit after tsec
+		endTick = HAL_GetTick() + (tsec * 1000);
+		/* Read samples in polling mode (no int) */
+		while(HAL_GetTick() < endTick)
+		{
+			memset(linebuf, 0x00, 120);
+			MMA8452Q_read(&dev_ctx, &acdt);
+			sprintf(linebuf, "X:%09.6f Y:%09.6f Z:%09.6f\r", acdt.x, acdt.y, acdt.z);
+			ConsoleIoSendString(linebuf);
+			HAL_Delay(100);
+		}
+	}
 	return COMMAND_SUCCESS;
 }
 
