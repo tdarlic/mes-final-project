@@ -20,8 +20,10 @@
 #include "hal_stm_lvgl/touchpad/touchpad.h"
 #include "console.h"
 #include "retarget.h"
+#include "Drivers/barometer.h"
 
 UART_HandleTypeDef huart1;
+bdata_t bdata;
 
 static void SystemClock_Config(void);
 static void MX_USART1_UART_Init(void);
@@ -54,12 +56,15 @@ int main(void)
 
 	RetargetInit(&huart1);
 	ConsoleInit(&huart1);
+	barometer_init();
 
 	while (1)
 	{
 		HAL_Delay(3);
 		lv_task_handler();
 		ConsoleProcess();
+		bdata = barometer_data();
+		set_barometer_value(bdata.hpa);
 	}
 }
 

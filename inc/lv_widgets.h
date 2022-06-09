@@ -26,6 +26,7 @@ extern "C" {
  * GLOBAL PROTOTYPES
  **********************/
 void lv_widgets(void);
+void set_barometer_value(float bvalue);
 
 /**********************
  *      MACROS

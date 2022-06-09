@@ -54,6 +54,8 @@ static lv_obj_t * meter1;
 static lv_obj_t * meter2;
 static lv_obj_t * meter3;
 
+lv_meter_indicator_t *indic;
+
 static lv_obj_t * chart1;
 static lv_obj_t * chart2;
 static lv_obj_t * chart3;
@@ -157,6 +159,10 @@ void lv_widgets(void)
     setup_create(t3);
 }
 
+void set_barometer_value(float bvalue){
+	lv_meter_set_indicator_value(meter3, indic, round(bvalue));
+}
+
 /**********************
  *   STATIC FUNCTIONS
  **********************/
@@ -166,7 +172,7 @@ static void pressure_create(lv_obj_t * parent)
     // Meter 3
 
 	lv_meter_scale_t * scale;
-	lv_meter_indicator_t *indic;
+
 	lv_anim_t a;
 
 	lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_ROW_WRAP);
@@ -222,14 +228,16 @@ static void pressure_create(lv_obj_t * parent)
 	lv_obj_t * hpa_unit_label = lv_label_create(meter3);
 	lv_label_set_text(hpa_unit_label, "hPa");
 
-	lv_anim_init(&a);
-	lv_anim_set_values(&a, 935, 1060);
-	lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-	lv_anim_set_exec_cb(&a, meter3_anim_cb);
-	lv_anim_set_var(&a, indic);
-	lv_anim_set_time(&a, 8000);
-	lv_anim_set_playback_time(&a, 800);
-	lv_anim_start(&a);
+	// Set animation to demonstrate the capabilities of the device
+//	lv_anim_init(&a);
+//	lv_anim_set_values(&a, 935, 1060);
+//	lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
+//	lv_anim_set_exec_cb(&a, meter3_anim_cb);
+//	lv_anim_set_var(&a, indic);
+//	lv_anim_set_time(&a, 8000);
+//	lv_anim_set_playback_time(&a, 800);
+//	lv_anim_start(&a);
+	lv_meter_set_indicator_value(meter3, indic, 930);
 
 	lv_obj_update_layout(parent);
 
