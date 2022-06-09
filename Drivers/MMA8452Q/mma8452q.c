@@ -150,7 +150,7 @@ float MMA8452Q_getCalculatedZ(stmdevacc_ctx_t *ctx)
 //		  of the acceleromter.
 //		* floats cx, cy, and cz will store the calculated acceleration from
 //		  those 12-bit values. These variables are in units of g's.
-void MMA8452Q_read(stmdevacc_ctx_t *ctx, ACC_DATA * acdt)
+void MMA8452Q_read(stmdevacc_ctx_t *ctx, ACC_DATA * acdt, ACC_RAW_DATA * acrwdt)
 {
     uint8_t rawData[6]; // x/y/z accel register data stored here
     MMA8452Q_readRegisters(ctx, OUT_X_MSB, rawData, 6); // Read the six raw data registers into data array
@@ -158,6 +158,10 @@ void MMA8452Q_read(stmdevacc_ctx_t *ctx, ACC_DATA * acdt)
     x = ((uint16_t)(rawData[0] << 8 | rawData[1])) >> 4;
     y = ((uint16_t)(rawData[2] << 8 | rawData[3])) >> 4;
     z = ((uint16_t)(rawData[4] << 8 | rawData[5])) >> 4;
+    acrwdt->x = x;
+    acrwdt->y = y;
+    acrwdt->z = z;
+
     cx = (float)x / (float)(1 << 11) * (float)(m_scale);
     cy = (float)y / (float)(1 << 11) * (float)(m_scale);
     cz = (float)z / (float)(1 << 11) * (float)(m_scale);

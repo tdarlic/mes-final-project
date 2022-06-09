@@ -159,7 +159,7 @@ typedef enum
 
 bool MMA8452Q_init_set(stmdevacc_ctx_t *ctx, MMA8452Q_Scale fsr, MMA8452Q_ODR odr);
 
-void MMA8452Q_read(stmdevacc_ctx_t *ctx, ACC_DATA * acdt);
+void MMA8452Q_read(stmdevacc_ctx_t *ctx, ACC_DATA * acdt, ACC_RAW_DATA * acrwdt);
 uint8_t MMA8452Q_available(stmdevacc_ctx_t *ctx);
 uint8_t MMA8452Q_readTap(stmdevacc_ctx_t *ctx);
 uint8_t MMA8452Q_readPL(stmdevacc_ctx_t *ctx);

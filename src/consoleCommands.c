@@ -14,8 +14,11 @@
 #include "../Drivers/i3g4250d.h"
 #include "../Drivers/stm32f429i_discovery_gyroscope.h"
 #include "../Drivers/barometer.h"
-#include "../Drivers/accelerometer.h"
-
+#ifdef MMA8452
+#	include "../Drivers/accelerometer.h"
+#endif
+#include "../Drivers/MMA8652/mma865x_driver.h"
+#include "../Drivers/MMA8652/mma865x_regdef.h"
 
 #define IGNORE_UNUSED_VARIABLE(x)  if ( &x == &x ) {}
 #define ABS(x)  (x < 0) ? (-x) : x
@@ -24,6 +27,10 @@
 #define GDISP_LEN ((GBAR_LEN * 2) + 2)
 //Set the full scale for the gyro
 #define GYRO_SCALE I3G4250D_FULLSCALE_245
+
+typedef struct _ACC_DATA {
+	float x, y, z;
+} ACC_DATA;
 
 static eCommandResult_T ConsoleCommandVer(const char buffer[]);
 static eCommandResult_T ConsoleCommandHelp(const char buffer[]);
@@ -195,11 +202,81 @@ static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]){
 	return COMMAND_SUCCESS;
 }
 
+static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]){
+	uint8_t buf;
+	char strbuf[100];
+	mma865x_driver_t I2C;
+
+	I2C.pComHandle = (sensor_comm_handle_t*) &I2cHandle;
+
+	mma865x_init(&I2C);
+	mma865x_read_reg(&I2C, MMA865x_WHO_AM_I, 1, &buf);
+	if (MMA8652_WHOAMI_VALUE == buf){
+		sprintf(strbuf, "Accelerometer initialized\r\n");
+	} else {
+		sprintf(strbuf, "Accelerometer failed\r\n");
+	}
+	ConsoleIoSendString(strbuf);
+
+	return COMMAND_SUCCESS;
+}
+
+static void convertAccData(mma865x_data_t data, float *x, float *y, float *z, uint8_t m_scale){
+	*x = (float)data.accel[0] / (float)(1 << 11) * (float)(m_scale);
+	*y = (float)data.accel[1] / (float)(1 << 11) * (float)(m_scale);
+	*z = (float)data.accel[2] / (float)(1 << 11) * (float)(m_scale);
+}
+
+/**
+ *Testing output of accelerometer
+ */
+static eCommandResult_T ConsoleCommandAccData(const char buffer[]){
+	uint8_t buf;
+	char strbuf[100];
+	char linebuf[120];
+	mma865x_driver_t I2C;
+	eCommandResult_T result;
+	mma865x_data_t accBuf;
+	int16_t tsec;
+	uint32_t endTick = 0;
+	float x, y, z = 0.0;
+
+	I2C.pComHandle = (sensor_comm_handle_t*) &I2cHandle;
+
+	result = ConsoleReceiveParamInt16(buffer, 1, &tsec);
+	if (COMMAND_SUCCESS == result ){
+
+		mma865x_init(&I2C);
+		mma865x_read_reg(&I2C, MMA865x_WHO_AM_I, 1, &buf);
+		if (MMA8652_WHOAMI_VALUE == buf){
+			sprintf(strbuf, "Accelerometer initialized\r\n");
+		} else {
+			sprintf(strbuf, "Accelerometer failed\r\n");
+		}
+		ConsoleIoSendString(strbuf);
+
+		mma865x_configure(&I2C, MMA865x_ODR_6P25_HZ, MMA865x_ACCEL_NORMAL, MMA865x_ACCEL_14BIT_READ_POLL_MODE);
+		mma865x_write_reg(&I2C, MMA865x_XYZ_DATA_CFG, MMA865x_XYZ_DATA_CFG_FS_2G, (uint8_t *) MMA865x_XYZ_DATA_CFG_FS_MASK);
+		endTick = HAL_GetTick() + (tsec * 1000);
+		/* Read samples in polling mode (no int) */
+		while(HAL_GetTick() < endTick)
+		{
+			memset(linebuf, 0x00, 120);
+			mma865x_read_data(&I2C, MMA865x_ACCEL_14BIT_DATAREAD, &accBuf);
+			convertAccData(accBuf, &x, &y, &z, 2);
+			sprintf(linebuf, "X:%08X Y:%08X Z:%08X - X:%09.6f Y:%09.6f Z:%09.6f\r\n", accBuf.accel[0], accBuf.accel[1], accBuf.accel[2], x, y, z);
+			ConsoleIoSendString(linebuf);
+			HAL_Delay(100);
+		}
+	}
+	return COMMAND_SUCCESS;
+}
+
+#ifdef MMA8452
 /**
  * Testing is accelerometer present
  */
 static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]){
-	uint8_t reg;
 	char strbuf[100];
 	memset(strbuf, 0, 100);
 	stmdevacc_ctx_t dev_ctx;
@@ -207,9 +284,9 @@ static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]){
 	dev_ctx = mma8452q_init();
 
 	if (MMA8452Q_init_set(&dev_ctx, SCALE_2G, ODR_12)){
-		sprintf(strbuf, "Accelerometer initialized\r\n", reg);
+		sprintf(strbuf, "Accelerometer initialized\r\n");
 	} else {
-		sprintf(strbuf, "Accelerometer failed\r\n", reg);
+		sprintf(strbuf, "Accelerometer failed\r\n");
 	}
 	ConsoleIoSendString(strbuf);
 
@@ -221,6 +298,7 @@ static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]){
  */
 static eCommandResult_T ConsoleCommandAccData(const char buffer[]){
 	ACC_DATA acdt;
+	ACC_RAW_DATA acrwdt;
 	int16_t tsec;
 	char linebuf[120];
 	eCommandResult_T result;
@@ -250,14 +328,18 @@ static eCommandResult_T ConsoleCommandAccData(const char buffer[]){
 		while(HAL_GetTick() < endTick)
 		{
 			memset(linebuf, 0x00, 120);
-			MMA8452Q_read(&dev_ctx, &acdt);
-			sprintf(linebuf, "X:%09.6f Y:%09.6f Z:%09.6f\r", acdt.x, acdt.y, acdt.z);
+			if (MMA8452Q_available(&dev_ctx)){
+				MMA8452Q_read(&dev_ctx, &acdt, &acrwdt);
+				sprintf(linebuf, "X:%05X Y:%05X Z:%05X - X:%09.6f Y:%09.6f Z:%09.6f\r\n", acrwdt.x, acrwdt.y, acrwdt.z, acdt.x, acdt.y, acdt.z);
+			}
 			ConsoleIoSendString(linebuf);
 			HAL_Delay(100);
 		}
 	}
 	return COMMAND_SUCCESS;
 }
+
+#endif
 
 /**
  * Testing is the barometer present or not
