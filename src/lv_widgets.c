@@ -237,6 +237,7 @@ static void pressure_create(lv_obj_t * parent)
 //	lv_anim_set_time(&a, 8000);
 //	lv_anim_set_playback_time(&a, 800);
 //	lv_anim_start(&a);
+	// Set indicator to minimum pressure for start
 	lv_meter_set_indicator_value(meter3, indic, 930);
 
 	lv_obj_update_layout(parent);
@@ -265,7 +266,7 @@ static void analytics_create(lv_obj_t * parent)
     lv_obj_set_style_max_height(chart1_cont, 300, 0);
 
     lv_obj_t * title = lv_label_create(chart1_cont);
-    lv_label_set_text(title, "Unique visitors");
+    lv_label_set_text(title, "Pressure history");
     lv_obj_add_style(title, &style_title, 0);
     lv_obj_set_grid_cell(title, LV_GRID_ALIGN_START, 0, 2, LV_GRID_ALIGN_START, 0, 1);
 
@@ -285,19 +286,21 @@ static void analytics_create(lv_obj_t * parent)
     lv_obj_set_style_radius(chart1, 0, 0);
 
     ser1 = lv_chart_add_series(chart1, lv_theme_get_color_primary(chart1), LV_CHART_AXIS_PRIMARY_Y);
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 80));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+
+    /////// Chart 2
 
     lv_obj_t * chart2_cont = lv_obj_create(parent);
     lv_obj_add_flag(chart2_cont, LV_OBJ_FLAG_FLEX_IN_NEW_TRACK);
