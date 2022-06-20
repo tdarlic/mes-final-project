@@ -27,6 +27,10 @@ Images of the etched prototype board:
 ![etched-top](/documents/images/etched_top.jpg)
 ![etched-bottom](/documents/images/etched_bottom.jpg)
 
+Images of the etched prototype board:
+![PCB-large](/documents/images/PCB_large.jpg)
+![PCB-part](/documents/images/PCB_part.jpg)
+
 #### Hardware block diagram
 ![Hardware block diagram](/documents/images/hardware_block_diagram.png#gh-light-mode-only)
 ![Hardware block diagram](/documents/images/hardware_block_diagram.dark.png#gh-dark-mode-only)
