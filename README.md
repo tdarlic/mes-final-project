@@ -55,6 +55,7 @@ Code uses the main control loop which handles the majority of the logic of the d
 
 4. State machine table for the digital barometer
 [Google docs link](https://docs.google.com/spreadsheets/d/12yw3s-WZycBy4THHcHLK3jvAh2Erp7io5NsqDaDRv0c/edit?usp=sharing)
+
 | States           | Action           | Events  |                  |                  |                 |                  |                 | 
 |------------------|------------------|---------|------------------|------------------|-----------------|------------------|-----------------|
 |                  |                  | Timer   | Move             | Tilt-Portrait    | Tilt-Landscpe   | Button           | Warning         | 
