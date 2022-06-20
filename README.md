@@ -24,12 +24,12 @@ Below is the schematic of the final PCB that was used:
 ![Schematic](/documents/images/disco-board-pcb.png)
 
 Images of the etched prototype board:
-![etched-top](/documents/images/etched_top.png)
-![etched-bottom](/documents/images/etched_bottom.png)
+![etched-top](/documents/images/etched_top.jpg)
+![etched-bottom](/documents/images/etched_bottom.jpg)
 
 #### Hardware block diagram
-![Hardware block diagram](/Week6/hardware_block_diagram.png#gh-light-mode-only)
-![Hardware block diagram](/Week6/hardware_block_diagram.dark.png#gh-dark-mode-only)
+![Hardware block diagram](/documents/images/hardware_block_diagram.png#gh-light-mode-only)
+![Hardware block diagram](/documents/images/hardware_block_diagram.dark.png#gh-dark-mode-only)
 
 ## 3. Software description
 Code uses the main control loop which handles the majority of the logic of the device. Below are main parts of the software:
@@ -52,8 +52,8 @@ Code uses the main control loop which handles the majority of the logic of the d
 - Describe code you re-used from other sources, including the licenses for those
 
 ## 4. Diagram(s) of the architecture
-![Hierarchy of control diagram](/Week6/hierarchy_of_control_diagram.png#gh-light-mode-only)
-![Hierarchy of control diagram](/Week6/hierarchy_of_control_diagram.dark.png#gh-dark-mode-only)
+![Hierarchy of control diagram](/documents/images/hierarchy_of_control_diagram.png#gh-light-mode-only)
+![Hierarchy of control diagram](/documents/images/hierarchy_of_control_diagram.dark.png#gh-dark-mode-only)
 
 ## 5. Build instructions
 
