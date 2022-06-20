@@ -45,6 +45,7 @@ Code uses the main control loop which handles the majority of the logic of the d
     - [LPS28DFW](https://github.com/STMicroelectronics/STMems_Standard_C_drivers)(BSD 3-Clause License)
     - [MMA8653FC](https://www.nxp.com/design/sensor-developer-resources/sensor-sw-component-library/sensor-drivers-for-nxp-sensors:SENSOR-DRIVERS)(Licence: LA_OPT_NXP_Software_License v34 February 2022)
     - Graphics library [LVGL](https://github.com/lvgl/lv_port_stm32f429_disco)(MIT License)
+    - Graphics library example code which was made to work for this board and then adjusted for the project
     - HAL (including generated code for the TFT LCD and touch controller)
     - Debug command line (Code taken from the Elicia White MES Week 5 assignment and adapted to match the requirements of the system):
         - Accelerometer test functions
@@ -52,6 +53,35 @@ Code uses the main control loop which handles the majority of the logic of the d
         - Screen test functions
         - Logging and mocking procedure for storm prediction algorithm
 
+4. State machine table for the digital barometer
+[Google docs link](https://docs.google.com/spreadsheets/d/12yw3s-WZycBy4THHcHLK3jvAh2Erp7io5NsqDaDRv0c/edit?usp=sharing)
+| States           | Action           | Events  |                  |                  |                 |                  |                 | 
+|------------------|------------------|---------|------------------|------------------|-----------------|------------------|-----------------|
+|                  |                  | Timer   | Move             | Tilt-Portrait    | Tilt-Landscpe   | Button           | Warning         | 
+| ON               | initialize       | x       | x                | x                | x               | x                | x               | 
+| SLEEP            | sleep            | MEASURE | DISPLAY_PRESSURE | DISPLAY_PRESSURE | DISPLAY_TREND   | DISPLAY_PRESSURE | DISPLAY_WARNING | 
+| MEASURE          | measure          | ERROR   | DISPLAY_PRESSURE | DISPLAY_PRESSURE | DISPLAY_TREND   | DISPLAY_PRESSURE | DISPLAY_WARNING | 
+| DISPLAY_PRESSURE | display_pressure | MEASURE | DISPLAY_PRESSURE | DISPLAY_PRESSURE | DISPLAY_TREND   | DISPLAY_PRESSURE | DISPLAY_WARNING | 
+| DISPLAY_TREND    | display_trend    | MEASURE | DISPLAY_TREND    | DISPLAY_PRESSURE | DISPLAY_TREND   | DISPLAY_TREND    | DISPLAY_WARNING | 
+| DISPLAY_WARNING  | display_warning  | MEASURE | DISPLAY_WARNING  | DISPLAY_WARNING  | DISPLAY_WARNING | DISPLAY_WARNING  | DISPLAY_WARNING | 
+| ERROR            | reset            | ON      | x                | x                | x               | x                | x               | 
+
+#### Description of the states
+- ON               - Initial state, all variables are reset and device started
+- SLEEP            - State in which device loops with screen off waiting for the timer or movement/input
+- MEASURE          - Measuring, this can be done in the background with ADC trough the timer
+- DISPLAY_PRESSURE - Standard display pressure mode in which the device is displaying pressure in portrait mode
+- DISPLAY_TREND    - Display pressure trend (graph) in last 6 hours in portait mode
+- DISPLAY_WARNING  - Warning: pressure trend has shown that the storm might be approacing
+- ERROR            - Some of the parameters of pressures is out of bounds, reset the device
+
+#### Description of the events
+- Timer             - Timer has run out and the device will either take measurement or display value
+- Move              - Movement has been detected and device will react to that by showing the screen
+- Tilt-Portait      - Device was set in portait orientation so display standard screen with preesure value
+- Tilt-Landscpe     - Device was set in landscape mode so show the graph with pressure trend
+- Button            - Button was pressed - activate the screen
+- Warning           - Pressure trend indicates that the storm is approaching
 - Describe the parts you wrote in some detail (maybe 3-5 sentences per module)
 - Describe code you re-used from other sources, including the licenses for those
 
@@ -61,7 +91,7 @@ Code uses the main control loop which handles the majority of the logic of the d
 
 ## 5. Build instructions
 
-### 5.1 How to build the system (including the toolchain(s))
+### 5.1 How to build the system 
 #### Hardware
 For putting hardware together a pcb was developed so it can hold the 
 #### Software
