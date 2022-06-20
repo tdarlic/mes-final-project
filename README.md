@@ -102,6 +102,11 @@ In order to build the hardware PCB should be made, accelerometer and barometer c
 can be used as they are used as pull-up or pull-down or as bypass capacitors. 
 
 #### Software
+In order to build the software the system needs to be pulled from the GitHub together with submodules:
+`git clone --recurse-submodules https://github.com/tdarlic/mes-final-project`
+
+Command above will clone the complete project and pull all required submodules. After cloning the project it can be loaded in the STM32CubeIDE (Version 1.9.0 was used to develop the project)
+
 ### 5.2 How you debugged and tested the system
 
 ## 6. Future
