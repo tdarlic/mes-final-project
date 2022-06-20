@@ -94,7 +94,13 @@ Code uses the main control loop which handles the majority of the logic of the d
 
 ### 5.1 How to build the system 
 #### Hardware
-For putting hardware together a pcb was developed so it can hold the 
+In order to build the hardware for the system a PCB was developed to plug into the Disco board. There are two version of the PCB:
+- Version made to be etched and used with MMA8653FC accelerometer soldered onto the brakeout board: ![Etched board](https://github.com/tdarlic/making-embedded-systems/tree/main/etched-disco-board-pcb)
+- Version ordered from the PCB fab house ![Fab house PCB](https://github.com/tdarlic/making-embedded-systems/tree/main/disco-board-pcb)
+
+In order to build the hardware PCB should be made, accelerometer and barometer chips should be ordered and soldered to the board. Passive elements are not so important and any close value part 
+can be used as they are used as pull-up or pull-down or as bypass capacitors. 
+
 #### Software
 ### 5.2 How you debugged and tested the system
 
