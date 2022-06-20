@@ -19,8 +19,13 @@ Following sensors are used in addition to the gyro already supplied by the board
 PCB was designed and ordered but were late to arrive so I had to etch my own PCB at home. As accelerometer and the barometer are usually QFN/DFN or some custom footprint that are
 hard to etch and solder at home I used the brakeout board for the MMA8653FC that I had on hand but later I shifted to MMA8652FC once the board arrived. 
 Because of this the code contains the version for both accelerometers. 
+
 Below is the schematic of the final PCB that was used:
 ![Schematic](/documents/images/disco-board-pcb.png)
+
+Images of the etched prototype board:
+![etched-top](/documents/images/etched_top.png)
+![etched-bottom](/documents/images/etched_bottom.png)
 
 #### Hardware block diagram
 ![Hardware block diagram](/Week6/hardware_block_diagram.png#gh-light-mode-only)
