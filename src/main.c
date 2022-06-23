@@ -53,6 +53,7 @@ void Error_Handler(void);
 int main(void)
 {
 	uint32_t minTick;
+	uint32_t lastMov = 0;
 	uint8_t eventVal;
 	uint16_t bval;
 
@@ -133,6 +134,7 @@ int main(void)
 		}
 		// now process the rotation of the screen if rotated
 		if (screen_rotated){
+			lastMov = HAL_GetTick() + 60 * 1000;
 			// Disable orientation interrupt so that it does not interfere here
 			HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
 			mma865x_read_event(&I2C, MMA865x_ORIENTATION, &orientation);
@@ -178,7 +180,7 @@ static bool get_press_trend(void){
 	uint16_t bdata;
 	int rs;
 	// walk the circular buffer and get max and minimum
-	for (i = 1; i < BAROMETER_BUFFER_SIZE; ++i) {
+	for (i = 1; i < circular_buf_size(me); ++i) {
 		rs = circular_buf_peek(me, &bdata, i);
 		if (rs == -1){
 			break;
