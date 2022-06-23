@@ -121,6 +121,7 @@ int main(void)
 			// value is stored as a uint16_t integer by subtracting 900 and multiplying
 			bval = (uint16_t) ((bdata.hpa - 900)  * 100);
 			circular_buf_put(me, bval);
+			lv_add_baro_value((uint16_t) bdata.hpa);
 		}
 
 		// if no interrupt was detected but the pin is held low then reset the interrupt in accelerometer
@@ -160,6 +161,10 @@ int main(void)
 			warnShown = false;
 		}
 	}
+}
+
+static bool get_press_trend(void){
+
 }
 
 /**

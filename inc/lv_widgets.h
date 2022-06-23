@@ -30,6 +30,7 @@ void set_barometer_value(float bvalue);
 void lv_rotate_screen(lv_disp_rot_t rot);
 void lv_ex_msgbox(void);
 void lv_ex_msgbox_close(void);
+void lv_add_baro_value(uint16_t bdata);
 
 /**********************
  *      MACROS

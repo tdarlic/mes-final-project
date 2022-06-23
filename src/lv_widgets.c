@@ -8,6 +8,7 @@
  *********************/
 #include "lv_widgets.h"
 #include "../lvgl/lvgl.h"
+#include <stdlib.h>
 
 /*********************
  *      DEFINES
@@ -54,12 +55,10 @@ static lv_chart_series_t * ser1;
 static const lv_font_t * font_large;
 static const lv_font_t * font_normal;
 
+static uint16_t nPoints = 25;
+
 // holding the modal message box
 lv_obj_t * mbox1;
-
-static uint32_t session_desktop = 1000;
-static uint32_t session_tablet = 1000;
-static uint32_t session_mobile = 1000;
 
 /**********************
  *      MACROS
@@ -279,9 +278,10 @@ static void analytics_create(lv_obj_t * parent)
     lv_obj_add_flag(chart1, LV_OBJ_FLAG_SCROLL_ON_FOCUS);
     lv_obj_set_grid_cell(chart1, LV_GRID_ALIGN_STRETCH, 1, 1, LV_GRID_ALIGN_STRETCH, 1, 1);
     lv_chart_set_axis_tick(chart1, LV_CHART_AXIS_PRIMARY_Y, 0, 0, 5, 1, true, 80);
-    lv_chart_set_axis_tick(chart1, LV_CHART_AXIS_PRIMARY_X, 0, 0, 12, 1, true, 50);
-    lv_chart_set_div_line_count(chart1, 0, 12);
-    lv_chart_set_point_count(chart1, 12);
+    lv_chart_set_axis_tick(chart1, LV_CHART_AXIS_PRIMARY_X, 0, 0, nPoints, 1, true, 50);
+    lv_chart_set_range(chart1, LV_CHART_AXIS_PRIMARY_Y, 930, 1070);
+    lv_chart_set_div_line_count(chart1, 0, nPoints);
+    lv_chart_set_point_count(chart1, nPoints);
     lv_obj_add_event_cb(chart1, chart_event_cb, LV_EVENT_ALL, NULL);
     if(disp_size == DISP_SMALL) lv_chart_set_zoom_x(chart1, 256 * 3);
     else if(disp_size == DISP_MEDIUM) lv_chart_set_zoom_x(chart1, 256 * 2);
@@ -290,19 +290,14 @@ static void analytics_create(lv_obj_t * parent)
     lv_obj_set_style_radius(chart1, 0, 0);
 
     ser1 = lv_chart_add_series(chart1, lv_theme_get_color_primary(chart1), LV_CHART_AXIS_PRIMARY_Y);
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
-    lv_chart_set_next_value(chart1, ser1, lv_rand(10, 40));
+
+}
+
+void lv_add_baro_value(uint16_t bdata){
+//	nPoints++;
+//	lv_chart_set_point_count(chart1, nPoints);
+//	lv_chart_set_div_line_count(chart1, 0, nPoints);
+	lv_chart_set_next_value(chart1, ser1, bdata);
 
 }
 
@@ -409,6 +404,7 @@ static void chart_event_cb(lv_event_t * e)
 {
     lv_event_code_t code = lv_event_get_code(e);
     lv_obj_t * obj = lv_event_get_target(e);
+    char snum[10];
 
     if(code == LV_EVENT_PRESSED || code == LV_EVENT_RELEASED) {
         lv_obj_invalidate(obj); /*To make the value boxes visible*/
@@ -421,8 +417,7 @@ static void chart_event_cb(lv_event_t * e)
                 const char * month[] = {"I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII"};
                 lv_snprintf(dsc->text, sizeof(dsc->text), "%s", month[dsc->value]);
             } else {
-                const char * month[] = {"Jan", "Febr", "March", "Apr", "May", "Jun", "July", "Aug", "Sept", "Oct", "Nov", "Dec"};
-                lv_snprintf(dsc->text, sizeof(dsc->text), "%s", month[dsc->value]);
+                lv_snprintf(dsc->text, sizeof(dsc->text), "%s", itoa(dsc->value, snum, 10));
             }
         }
 

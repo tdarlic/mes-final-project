@@ -193,7 +193,7 @@ static eCommandResult_T ConsoleCommandCircBuf(const char buffer[]){
 		} else {
 			//Reset the string buffer
 			memset(strbuf, 0x00, 100);
-			sprintf(strbuf, "%i - %i\n", i, bdata);
+			sprintf(strbuf, "%i - %f\n", i, ((float)bdata/100 + 900));
 			ConsoleIoSendString(strbuf);
 		}
 	}
