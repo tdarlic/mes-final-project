@@ -47,6 +47,7 @@ bool warnShown = false;
 
 static void SystemClock_Config(void);
 static void MX_USART1_UART_Init(void);
+static bool get_press_trend(void);
 void Error_Handler(void);
 
 int main(void)
@@ -122,6 +123,8 @@ int main(void)
 			bval = (uint16_t) ((bdata.hpa - 900)  * 100);
 			circular_buf_put(me, bval);
 			lv_add_baro_value((uint16_t) bdata.hpa);
+			// calculate pressure trend and if needed send alarm
+			get_press_trend();
 		}
 
 		// if no interrupt was detected but the pin is held low then reset the interrupt in accelerometer
@@ -163,8 +166,41 @@ int main(void)
 	}
 }
 
+/**
+ * Calculates the pressure trend for this circular buffer
+ * If trend drops more than 4 mb in last 4 hours storm is coming
+ */
 static bool get_press_trend(void){
-
+	uint16_t i;
+	float val;
+	float min = 1200.0;
+	float max = 0.0;
+	uint16_t bdata;
+	int rs;
+	// walk the circular buffer and get max and minimum
+	for (i = 1; i < BAROMETER_BUFFER_SIZE; ++i) {
+		rs = circular_buf_peek(me, &bdata, i);
+		if (rs == -1){
+			break;
+		} else {
+			val = ((float)bdata/100) + 900;
+			if (val < min){
+				min = val;
+			}
+			if (val > max){
+				max = val;
+			}
+		}
+	}
+	// if highest pressure was lower than storm limit
+	if (max >= 1009.144){
+		// if pressure was dropping more than 1 mb per hour storm is coming
+		if ((max - min) >= 4){
+			warnShown = true;
+			return true;
+		}
+	}
+	return false;
 }
 
 /**
