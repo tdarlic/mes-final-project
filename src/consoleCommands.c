@@ -19,6 +19,7 @@
 #endif
 #include "../Drivers/MMA8652/mma865x_driver.h"
 #include "../Drivers/MMA8652/mma865x_regdef.h"
+#include "main.h"
 
 #define IGNORE_UNUSED_VARIABLE(x)  if ( &x == &x ) {}
 #define ABS(x)  (x < 0) ? (-x) : x
@@ -42,6 +43,7 @@ static eCommandResult_T ConsoleCommandBaroData(const char buffer[]);
 static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]);
 static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]);
 static eCommandResult_T ConsoleCommandAccData(const char buffer[]);
+static eCommandResult_T ConsoleCommandAccOrient(const char buffer[]);
 
 static const sConsoleCommandTable_T mConsoleCommandTable[] =
 {
@@ -55,6 +57,7 @@ static const sConsoleCommandTable_T mConsoleCommandTable[] =
 	{"br", &ConsoleCommandBaroReset, HELP("Reset barometer")},
 	{"ap", &ConsoleCommandAccPresent, HELP("Check is accelerometer present and responding")},
 	{"ad", &ConsoleCommandAccData, HELP("Get accelerometer data: params 10 - number of seconds to test")},
+	{"ao", &ConsoleCommandAccOrient, HELP("Get accelerometer orientation: params 10 - number of seconds to test")},
 
 	CONSOLE_COMMAND_TABLE_END // must be LAST
 };
@@ -217,6 +220,64 @@ static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]){
 		sprintf(strbuf, "Accelerometer failed\r\n");
 	}
 	ConsoleIoSendString(strbuf);
+
+	return COMMAND_SUCCESS;
+}
+
+static eCommandResult_T ConsoleCommandAccOrient(const char buffer[]){
+	uint8_t buf;
+	char strbuf[100];
+	mma865x_driver_t I2C;
+	int16_t tsec;
+	uint32_t endTick = 0;
+	uint8_t eventVal;
+	eCommandResult_T result;
+
+	I2C.pComHandle = (sensor_comm_handle_t*) &I2cHandle;
+
+	result = ConsoleReceiveParamInt16(buffer, 1, &tsec);
+	if (COMMAND_SUCCESS == result ){
+		mma865x_init(&I2C);
+		mma865x_read_reg(&I2C, MMA865x_WHO_AM_I, 1, &buf);
+		mma865x_set_embedded_function(&I2C, MMA865x_ORIENT_DETECTION_MODE);
+
+		endTick = HAL_GetTick() + (tsec * 1000);
+
+		ConsoleIoSendString("\r\n**********\r\nDetecting orientation\r\n");
+		while(HAL_GetTick() < endTick)
+		{
+			memset(strbuf, 0x00, 100);
+			if (screen_rotated){
+				ConsoleIoSendString("Orientation interrupt\r\n");
+				screen_rotated = false;
+			}
+			mma865x_read_event(&I2C, MMA865x_ORIENTATION, &eventVal);
+			switch (eventVal){
+			case MMA865x_PORTRAIT_UP:
+				sprintf(strbuf, "Portrait up: Real landscape left\r\n");
+				ConsoleIoSendString(strbuf);
+				break;
+			case MMA865x_PORTRAIT_DOWN:
+				sprintf(strbuf, "Portrait down: Real landscape right\r\n");
+				ConsoleIoSendString(strbuf);
+				break;
+			case MMA865x_LANDSCAPE_RIGHT:
+				sprintf(strbuf, "Landscape right: Real PORTRAIT UP\r\n");
+				ConsoleIoSendString(strbuf);
+				break;
+			case MMA865x_LANDSCAPE_LEFT:
+				sprintf(strbuf, "Landscape left: Real PORTRAIT DOWN\r\n");
+				ConsoleIoSendString(strbuf);
+				break;
+			default:
+				break;
+			}
+			HAL_Delay(100);
+		}
+	}
+
+
+	ConsoleIoSendString("\r\nDone\r\n**********\r\n");
 
 	return COMMAND_SUCCESS;
 }

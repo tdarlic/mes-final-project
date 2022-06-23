@@ -80,7 +80,12 @@ typedef enum
 {  
   BUTTON_MODE_GPIO = 0,
   BUTTON_MODE_EXTI = 1
-}ButtonMode_TypeDef;     
+}ButtonMode_TypeDef;
+
+#define ACC_INT1_Pin GPIO_PIN_8
+#define ACC_INT1_GPIO_Port GPIOC
+#define ACC_INT2_Pin GPIO_PIN_11
+#define ACC_INT2_GPIO_Port GPIOC
 
 /**
   * @}
@@ -326,6 +331,7 @@ void     BSP_LED_Off(Led_TypeDef Led);
 void     BSP_LED_Toggle(Led_TypeDef Led);
 void     BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode);
 uint32_t BSP_PB_GetState(Button_TypeDef Button);
+void ACC_interrupt_init(void);
 
 /**
   * @}

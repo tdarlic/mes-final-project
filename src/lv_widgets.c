@@ -159,6 +159,13 @@ void lv_widgets(void)
     setup_create(t3);
 }
 
+/**
+ * Rotates the screen to any rotation
+ */
+void lv_rotate_screen(lv_disp_rot_t rot){
+	lv_disp_set_rotation(lv_disp_get_default(), rot);
+}
+
 void set_barometer_value(float bvalue){
 	lv_meter_set_indicator_value(meter3, indic, round(bvalue));
 }

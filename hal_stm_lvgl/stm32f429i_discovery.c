@@ -251,7 +251,7 @@ void BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
     /* Configure Button pin as input */
     GPIO_InitStruct.Pin = BUTTON_PIN[Button];
     GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+    GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FAST;
     HAL_GPIO_Init(BUTTON_PORT[Button], &GPIO_InitStruct);
   }
@@ -268,6 +268,33 @@ void BSP_PB_Init(Button_TypeDef Button, ButtonMode_TypeDef ButtonMode)
     HAL_NVIC_SetPriority((IRQn_Type)(BUTTON_IRQn[Button]), 0x0F, 0x00);
     HAL_NVIC_EnableIRQ((IRQn_Type)(BUTTON_IRQn[Button]));
   }
+}
+
+
+void ACC_interrupt_init(void){
+
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	__HAL_RCC_GPIOC_CLK_ENABLE();
+
+	/* Configure Button pin as input with External interrupt */
+	GPIO_InitStruct.Pin = ACC_INT1_Pin;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+	HAL_GPIO_Init(ACC_INT1_GPIO_Port, &GPIO_InitStruct);
+
+	GPIO_InitStruct.Pin = ACC_INT2_Pin;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+	GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING;
+	HAL_GPIO_Init(ACC_INT2_GPIO_Port, &GPIO_InitStruct);
+
+	/* Enable and set Acc 1 EXTI Interrupt to the lowest priority */
+	HAL_NVIC_SetPriority(EXTI9_5_IRQn, 0x0F, 0x00);
+	HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+
+	/* Enable and set Acc 2 EXTI Interrupt to the lowest priority */
+	HAL_NVIC_SetPriority(EXTI15_10_IRQn, 0x0F, 0x00);
+	HAL_NVIC_EnableIRQ(EXTI15_10_IRQn);
 }
 
 /**

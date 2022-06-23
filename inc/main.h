@@ -28,7 +28,9 @@ extern "C" {
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f4xx_hal.h"
-
+#include "lvgl/lvgl.h"
+#include "Drivers/MMA8652/mma865x_driver.h"
+#include "Drivers/MMA8652/mma865x_regdef.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -53,6 +55,12 @@ extern "C" {
 void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
+extern volatile uint16_t delayTime;
+
+extern volatile lv_disp_rot_t rotation;
+extern volatile bool screen_rotated;
+extern mma865x_driver_t I2C;
+extern uint8_t orientation;
 
 /* USER CODE END EFP */
 
@@ -61,6 +69,10 @@ void Error_Handler(void);
 #define STLINK_RX_GPIO_Port GPIOA
 #define STLINK_TX_Pin GPIO_PIN_10
 #define STLINK_TX_GPIO_Port GPIOA
+#define ACC_INT1_Pin GPIO_PIN_8
+#define ACC_INT1_GPIO_Port GPIOC
+#define ACC_INT2_Pin GPIO_PIN_11
+#define ACC_INT2_GPIO_Port GPIOC
 /*
 #define PC14_OSC32_IN_Pin GPIO_PIN_14
 #define PC14_OSC32_IN_GPIO_Port GPIOC

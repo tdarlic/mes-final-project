@@ -59,6 +59,8 @@ void DebugMon_Handler(void);
 void PendSV_Handler(void);
 void SysTick_Handler(void);
 void USART1_IRQHandler(void);
+void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin);
+void EXTI0_IRQHandler(void);
 
 #ifdef __cplusplus
 }

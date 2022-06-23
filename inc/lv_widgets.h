@@ -13,7 +13,7 @@ extern "C" {
 /*********************
  *      INCLUDES
  *********************/
-
+#include "lvgl/lvgl.h"
 /*********************
  *      DEFINES
  *********************/
@@ -27,6 +27,7 @@ extern "C" {
  **********************/
 void lv_widgets(void);
 void set_barometer_value(float bvalue);
+void lv_rotate_screen(lv_disp_rot_t rot);
 
 /**********************
  *      MACROS

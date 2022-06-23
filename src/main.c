@@ -21,9 +21,20 @@
 #include "console.h"
 #include "retarget.h"
 #include "Drivers/barometer.h"
+#include "Drivers/MMA8652/mma865x_driver.h"
+#include "Drivers/MMA8652/mma865x_regdef.h"
 
 UART_HandleTypeDef huart1;
 bdata_t bdata;
+volatile uint16_t delayTime = 100;
+
+// screen rotation constants
+volatile lv_disp_rot_t rotation;
+volatile bool screen_rotated;
+uint8_t orientation;
+
+// Accelerometer I2C driver
+mma865x_driver_t I2C;
 
 static void SystemClock_Config(void);
 static void MX_USART1_UART_Init(void);
@@ -31,8 +42,12 @@ void Error_Handler(void);
 
 int main(void)
 {
+	uint32_t minTick;
+	uint8_t eventVal;
 
 	HAL_Init();
+
+	I2C.pComHandle = (sensor_comm_handle_t*) &I2cHandle;
 
 	/* Configure the system clock to 180 MHz */
 	SystemClock_Config();
@@ -41,11 +56,17 @@ int main(void)
 
 	/*Start up indication*/
 	BSP_LED_Init(LED3);
+	BSP_LED_Init(LED4);
 	uint32_t i;
 	for (i = 0; i < 8; i++) {
 		BSP_LED_Toggle(LED3);
 		HAL_Delay(50);
 	}
+
+
+
+	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
+	ACC_interrupt_init();
 
 	lv_init();
 
@@ -58,13 +79,66 @@ int main(void)
 	ConsoleInit(&huart1);
 	barometer_init();
 
+	// get tick and check barometer data every minute
+	minTick = HAL_GetTick() + (60 * 1000);
+	// switch off LED3 (green)
+	BSP_LED_Off(LED3);
+
+	// set the barometer value
+	bdata = barometer_data();
+	set_barometer_value(bdata.hpa);
+
+	// initialize the accelerometer orientation detection mode
+	mma865x_init(&I2C);
+	mma865x_set_embedded_function(&I2C, MMA865x_ORIENT_DETECTION_MODE);
+	screen_rotated = true;
+	mma865x_read_event(&I2C, MMA865x_ORIENTATION, &eventVal);
+
+	// Superloop
 	while (1)
 	{
 		HAL_Delay(3);
 		lv_task_handler();
 		ConsoleProcess();
-		bdata = barometer_data();
-		set_barometer_value(bdata.hpa);
+
+		if (minTick < HAL_GetTick()){
+			bdata = barometer_data();
+			set_barometer_value(bdata.hpa);
+			minTick = HAL_GetTick() + (60 * 1000);
+			//@TODO: remember the barometer value for display
+		}
+
+		// if no interrupt was detected but the pin is held low then reset the interrupt in accelerometer
+		if ((HAL_GPIO_ReadPin(ACC_INT1_GPIO_Port, ACC_INT1_Pin) == 0) && (!screen_rotated)){
+			mma865x_read_event(&I2C, MMA865x_ORIENTATION, &eventVal);
+		}
+		// now process the rotation of the screen if rotated
+		if (screen_rotated){
+			// Disable orientation interrupt so that it does not interfere here
+			HAL_NVIC_DisableIRQ(EXTI9_5_IRQn);
+			mma865x_read_event(&I2C, MMA865x_ORIENTATION, &orientation);
+			if (eventVal != 0){
+				switch (eventVal){
+				case MMA865x_PORTRAIT_UP:
+					lv_rotate_screen(LV_DISP_ROT_90);
+					break;
+				case MMA865x_PORTRAIT_DOWN:
+					lv_rotate_screen(LV_DISP_ROT_270);
+					break;
+				case MMA865x_LANDSCAPE_RIGHT:
+					lv_rotate_screen(LV_DISP_ROT_NONE);
+					break;
+				case MMA865x_LANDSCAPE_LEFT:
+					lv_rotate_screen(LV_DISP_ROT_180);
+					break;
+				default:
+					break;
+				}
+			}
+
+			screen_rotated = false;
+			HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+		}
 	}
 }
 
