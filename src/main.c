@@ -8,7 +8,7 @@
   ******************************************************************************
 */
 
-
+#include <stdlib.h>
 #include <lv_widgets.h>
 #include "stm32f4xx.h"
 #include "hal_stm_lvgl/stm32f429i_discovery.h"
@@ -24,10 +24,16 @@
 #include "Drivers/MMA8652/mma865x_driver.h"
 #include "Drivers/MMA8652/mma865x_regdef.h"
 #include "circular_buffer.h"
+#include "main.h"
 
 UART_HandleTypeDef huart1;
 bdata_t bdata;
 volatile uint16_t delayTime = 100;
+
+// buffer containing the barometer values
+uint16_t * buffer;
+// handle for circular buffer
+cbuf_handle_t me;
 
 // screen rotation constants
 volatile lv_disp_rot_t rotation;
@@ -37,9 +43,7 @@ uint8_t orientation;
 // Accelerometer I2C driver
 mma865x_driver_t I2C;
 
-// size of the buffer holding the barometer values
-// 240 holds last 4 hours
-#define BAROMETER_BUFFER_SIZE 240
+bool warnShown = false;
 
 static void SystemClock_Config(void);
 static void MX_USART1_UART_Init(void);
@@ -51,10 +55,10 @@ int main(void)
 	uint8_t eventVal;
 	uint16_t bval;
 
-	uint8_t * buffer  = malloc(BAROMETER_BUFFER_SIZE * sizeof(uint8_t));
-	cbuf_handle_t me = circular_buf_init(buffer, BAROMETER_BUFFER_SIZE);
-
 	HAL_Init();
+
+	buffer  = malloc(BAROMETER_BUFFER_SIZE * sizeof(uint8_t));
+	me = circular_buf_init(buffer, BAROMETER_BUFFER_SIZE);
 
 	I2C.pComHandle = (sensor_comm_handle_t*) &I2cHandle;
 
@@ -86,8 +90,8 @@ int main(void)
 	ConsoleInit(&huart1);
 	barometer_init();
 
-	// get tick and check barometer data every minute
-	minTick = HAL_GetTick() + (60 * 1000);
+	// immediately get barometer value
+	minTick = 0;
 	// switch off LED3 (green)
 	BSP_LED_Off(LED3);
 
@@ -112,7 +116,7 @@ int main(void)
 		if (minTick < HAL_GetTick()){
 			bdata = barometer_data();
 			set_barometer_value(bdata.hpa);
-			minTick = HAL_GetTick() + (60 * 1000);
+			minTick = HAL_GetTick() + (BAROMETER_LOG_INTERVAL * 1000);
 			// convert float into uint16_t for storing variable into a buffer
 			// value is stored as a uint16_t integer by subtracting 900 and multiplying
 			bval = (uint16_t) ((bdata.hpa - 900)  * 100);
@@ -146,9 +150,14 @@ int main(void)
 					break;
 				}
 			}
-
+			// reset screen rotated variable
 			screen_rotated = false;
 			HAL_NVIC_EnableIRQ(EXTI9_5_IRQn);
+		}
+
+		if (warnShown){
+			lv_ex_msgbox();
+			warnShown = false;
 		}
 	}
 }

@@ -20,6 +20,7 @@
 #include "../Drivers/MMA8652/mma865x_driver.h"
 #include "../Drivers/MMA8652/mma865x_regdef.h"
 #include "main.h"
+#include "circular_buffer.h"
 
 #define IGNORE_UNUSED_VARIABLE(x)  if ( &x == &x ) {}
 #define ABS(x)  (x < 0) ? (-x) : x
@@ -44,6 +45,8 @@ static eCommandResult_T ConsoleCommandBaroReset(const char buffer[]);
 static eCommandResult_T ConsoleCommandAccPresent(const char buffer[]);
 static eCommandResult_T ConsoleCommandAccData(const char buffer[]);
 static eCommandResult_T ConsoleCommandAccOrient(const char buffer[]);
+static eCommandResult_T ConsoleCommandSimWarn(const char buffer[]);
+static eCommandResult_T ConsoleCommandCircBuf(const char buffer[]);
 
 static const sConsoleCommandTable_T mConsoleCommandTable[] =
 {
@@ -58,6 +61,8 @@ static const sConsoleCommandTable_T mConsoleCommandTable[] =
 	{"ap", &ConsoleCommandAccPresent, HELP("Check is accelerometer present and responding")},
 	{"ad", &ConsoleCommandAccData, HELP("Get accelerometer data: params 10 - number of seconds to test")},
 	{"ao", &ConsoleCommandAccOrient, HELP("Get accelerometer orientation: params 10 - number of seconds to test")},
+	{"sw", &ConsoleCommandSimWarn, HELP("Simulate barometer warning")},
+	{"cb", &ConsoleCommandCircBuf, HELP("Output circular buffer")},
 
 	CONSOLE_COMMAND_TABLE_END // must be LAST
 };
@@ -167,6 +172,40 @@ static eCommandResult_T ConsoleCommandGyroTest(const char buffer[]){
 	return COMMAND_SUCCESS;
 }
 
+
+static eCommandResult_T ConsoleCommandCircBuf(const char buffer[]){
+	uint16_t i;
+	uint16_t bdata;
+	char strbuf[100];
+	int rs;
+
+	ConsoleIoSendString("\r\n************\r\nCircular Buffer:\r\n");
+	sprintf(strbuf, "Circular buffer size/capacity %i / %i\n", circular_buf_size(me), circular_buf_capacity(me));
+	ConsoleIoSendString(strbuf);
+
+	memset(strbuf, 0x00, 100);
+
+
+	for (i = 1; i < BAROMETER_BUFFER_SIZE; ++i) {
+		rs = circular_buf_peek(me, &bdata, i);
+		if (rs == -1){
+			break;
+		} else {
+			//Reset the string buffer
+			memset(strbuf, 0x00, 100);
+			sprintf(strbuf, "%i - %i\n", i, bdata);
+			ConsoleIoSendString(strbuf);
+		}
+	}
+	ConsoleIoSendString("\r\nDone\r\n");
+
+	return COMMAND_SUCCESS;
+}
+
+static eCommandResult_T ConsoleCommandSimWarn(const char buffer[]){
+	warnShown = true;
+	return COMMAND_SUCCESS;
+}
 
 /**
  * Testing is the gyro present or not

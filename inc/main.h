@@ -31,6 +31,7 @@ extern "C" {
 #include "lvgl/lvgl.h"
 #include "Drivers/MMA8652/mma865x_driver.h"
 #include "Drivers/MMA8652/mma865x_regdef.h"
+#include "circular_buffer.h"
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
@@ -61,6 +62,16 @@ extern volatile lv_disp_rot_t rotation;
 extern volatile bool screen_rotated;
 extern mma865x_driver_t I2C;
 extern uint8_t orientation;
+extern bool warnShown;
+extern uint16_t * buffer;
+extern cbuf_handle_t me;
+
+// size of the buffer holding the barometer values
+// 240 holds last 4 hours
+#define BAROMETER_BUFFER_SIZE 240
+
+// barometer log interval in seconds
+#define BAROMETER_LOG_INTERVAL 5
 
 /* USER CODE END EFP */
 

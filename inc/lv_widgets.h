@@ -28,6 +28,8 @@ extern "C" {
 void lv_widgets(void);
 void set_barometer_value(float bvalue);
 void lv_rotate_screen(lv_disp_rot_t rot);
+void lv_ex_msgbox(void);
+void lv_ex_msgbox_close(void);
 
 /**********************
  *      MACROS

@@ -32,11 +32,6 @@ static void setup_create(lv_obj_t * parent);
 static lv_obj_t * create_meter_box(lv_obj_t * parent, const char * title, const char * text1, const char * text2, const char * text3);
 
 static void chart_event_cb(lv_event_t * e);
-static void meter1_indic1_anim_cb(void * var, int32_t v);
-static void meter1_indic2_anim_cb(void * var, int32_t v);
-static void meter1_indic3_anim_cb(void * var, int32_t v);
-static void meter2_timer_cb(lv_timer_t * timer);
-static void meter3_anim_cb(void * var, int32_t v);
 
 /**********************
  *  STATIC VARIABLES
@@ -49,8 +44,6 @@ static lv_style_t style_title;
 static lv_style_t style_icon;
 static lv_style_t style_bullet;
 
-static lv_obj_t * meter1;
-static lv_obj_t * meter2;
 static lv_obj_t * meter3;
 
 lv_meter_indicator_t *indic;
@@ -60,6 +53,9 @@ static lv_chart_series_t * ser1;
 
 static const lv_font_t * font_large;
 static const lv_font_t * font_normal;
+
+// holding the modal message box
+lv_obj_t * mbox1;
 
 static uint32_t session_desktop = 1000;
 static uint32_t session_tablet = 1000;
@@ -161,6 +157,25 @@ void lv_rotate_screen(lv_disp_rot_t rot){
 
 void set_barometer_value(float bvalue){
 	lv_meter_set_indicator_value(meter3, indic, round(bvalue));
+}
+
+static void event_cb(lv_event_t * e)
+{
+    lv_obj_t * obj = lv_event_get_current_target(e);
+    lv_msgbox_close(mbox1);
+}
+
+void lv_ex_msgbox_close(void){
+	lv_msgbox_close(mbox1);
+}
+
+void lv_ex_msgbox(void)
+{
+    static const char * btns[] = {"Ok", NULL};
+
+    mbox1 = lv_msgbox_create(NULL, "Storm!!!", "Storm Warning", btns, false);
+    lv_obj_add_event_cb(mbox1, event_cb, LV_EVENT_VALUE_CHANGED, NULL);
+    lv_obj_center(mbox1);
 }
 
 /**********************
@@ -411,196 +426,7 @@ static void chart_event_cb(lv_event_t * e)
             }
         }
 
-        /*Add the faded area before the lines are drawn */
-        else if(dsc->part == LV_PART_ITEMS) {
-#if LV_DRAW_COMPLEX
-            /*Add  a line mask that keeps the area below the line*/
-            if(dsc->p1 && dsc->p2) {
-                lv_draw_mask_line_param_t line_mask_param;
-                lv_draw_mask_line_points_init(&line_mask_param, dsc->p1->x, dsc->p1->y, dsc->p2->x, dsc->p2->y, LV_DRAW_MASK_LINE_SIDE_BOTTOM);
-                int16_t line_mask_id = lv_draw_mask_add(&line_mask_param, NULL);
-
-                /*Add a fade effect: transparent bottom covering top*/
-                lv_coord_t h = lv_obj_get_height(obj);
-                lv_draw_mask_fade_param_t fade_mask_param;
-                lv_draw_mask_fade_init(&fade_mask_param, &obj->coords, LV_OPA_COVER, obj->coords.y1 + h / 8, LV_OPA_TRANSP, obj->coords.y2);
-                int16_t fade_mask_id = lv_draw_mask_add(&fade_mask_param, NULL);
-
-                /*Draw a rectangle that will be affected by the mask*/
-                lv_draw_rect_dsc_t draw_rect_dsc;
-                lv_draw_rect_dsc_init(&draw_rect_dsc);
-                draw_rect_dsc.bg_opa = LV_OPA_50;
-                draw_rect_dsc.bg_color = dsc->line_dsc->color;
-
-                lv_area_t obj_clip_area;
-                _lv_area_intersect(&obj_clip_area, dsc->clip_area, &obj->coords);
-
-                lv_area_t a;
-                a.x1 = dsc->p1->x;
-                a.x2 = dsc->p2->x - 1;
-                a.y1 = LV_MIN(dsc->p1->y, dsc->p2->y);
-                a.y2 = obj->coords.y2;
-                lv_draw_rect(&a, &obj_clip_area, &draw_rect_dsc);
-
-                /*Remove the masks*/
-                lv_draw_mask_remove_id(line_mask_id);
-                lv_draw_mask_remove_id(fade_mask_id);
-            }
-#endif
-
-
-            const lv_chart_series_t * ser = dsc->sub_part_ptr;
-
-            if(lv_chart_get_pressed_point(obj) == dsc->id) {
-                if(lv_chart_get_type(obj) == LV_CHART_TYPE_LINE) {
-                    dsc->rect_dsc->outline_color = lv_color_white();
-                    dsc->rect_dsc->outline_width = 2;
-                } else {
-                    dsc->rect_dsc->shadow_color = ser->color;
-                    dsc->rect_dsc->shadow_width = 15;
-                    dsc->rect_dsc->shadow_spread = 0;
-                }
-
-                char buf[8];
-                lv_snprintf(buf, sizeof(buf), "%d", dsc->value);
-
-                lv_point_t text_size;
-                lv_txt_get_size(&text_size, buf, font_normal, 0, 0, LV_COORD_MAX, LV_TEXT_FLAG_NONE);
-
-                lv_area_t txt_area;
-                if(lv_chart_get_type(obj) == LV_CHART_TYPE_BAR) {
-                    txt_area.y2 = dsc->draw_area->y1 - LV_DPX(15);
-                    txt_area.y1 = txt_area.y2 - text_size.y;
-                    if(ser == lv_chart_get_series_next(obj, NULL)) {
-                        txt_area.x1 = dsc->draw_area->x1 + lv_area_get_width(dsc->draw_area) / 2;
-                        txt_area.x2 = txt_area.x1 + text_size.x;
-                    } else {
-                        txt_area.x2 = dsc->draw_area->x1 + lv_area_get_width(dsc->draw_area) / 2;
-                        txt_area.x1 = txt_area.x2 - text_size.x;
-                    }
-                } else {
-                    txt_area.x1 = dsc->draw_area->x1 + lv_area_get_width(dsc->draw_area) / 2 - text_size.x / 2;
-                    txt_area.x2 = txt_area.x1 + text_size.x;
-                    txt_area.y2 = dsc->draw_area->y1 - LV_DPX(15);
-                    txt_area.y1 = txt_area.y2 - text_size.y;
-                }
-
-                lv_area_t bg_area;
-                bg_area.x1 = txt_area.x1 - LV_DPX(8);
-                bg_area.x2 = txt_area.x2 + LV_DPX(8);
-                bg_area.y1 = txt_area.y1 - LV_DPX(8);
-                bg_area.y2 = txt_area.y2 + LV_DPX(8);
-
-                lv_draw_rect_dsc_t rect_dsc;
-                lv_draw_rect_dsc_init(&rect_dsc);
-                rect_dsc.bg_color = ser->color;
-                rect_dsc.radius = LV_DPX(5);
-                lv_draw_rect(&bg_area, dsc->clip_area, &rect_dsc);
-
-                lv_draw_label_dsc_t label_dsc;
-                lv_draw_label_dsc_init(&label_dsc);
-                label_dsc.color = lv_color_white();
-                label_dsc.font = font_normal;
-                lv_draw_label(&txt_area, dsc->clip_area, &label_dsc, buf, NULL);
-            } else {
-                dsc->rect_dsc->outline_width = 0;
-                dsc->rect_dsc->shadow_width = 0;
-            }
-        }
     }
 }
 
-static void meter1_indic1_anim_cb(void * var, int32_t v)
-{
-    lv_meter_set_indicator_end_value(meter1, var, v);
 
-    lv_obj_t * card = lv_obj_get_parent(meter1);
-    lv_obj_t * label = lv_obj_get_child(card, -5);
-    lv_label_set_text_fmt(label, "Revenue: %d %%", v);
-}
-
-static void meter1_indic2_anim_cb(void * var, int32_t v)
-{
-    lv_meter_set_indicator_end_value(meter1, var, v);
-
-    lv_obj_t * card = lv_obj_get_parent(meter1);
-    lv_obj_t * label = lv_obj_get_child(card, -3);
-    lv_label_set_text_fmt(label, "Sales: %d %%", v);
-
-}
-
-static void meter1_indic3_anim_cb(void * var, int32_t v)
-{
-    lv_meter_set_indicator_end_value(meter1, var, v);
-
-    lv_obj_t * card = lv_obj_get_parent(meter1);
-    lv_obj_t * label = lv_obj_get_child(card, -1);
-    lv_label_set_text_fmt(label, "Costs: %d %%", v);
-}
-
-static void meter2_timer_cb(lv_timer_t * timer)
-{
-    lv_meter_indicator_t ** indics = timer->user_data;
-
-    static bool down1 = false;
-    static bool down2 = false;
-    static bool down3 = false;
-
-
-    if(down1) {
-        session_desktop -= 137;
-        if(session_desktop < 1400) down1 = false;
-    } else {
-        session_desktop += 116;
-        if(session_desktop > 4500) down1 = true;
-    }
-
-    if(down2) {
-        session_tablet -= 3;
-        if(session_tablet < 1400) down2 = false;
-    } else {
-        session_tablet += 9;
-        if(session_tablet > 4500) down2 = true;
-    }
-
-    if(down3) {
-        session_mobile -= 57;
-        if(session_mobile < 1400) down3 = false;
-    } else {
-        session_mobile += 76;
-        if(session_mobile > 4500) down3 = true;
-    }
-
-    uint32_t all = session_desktop + session_tablet + session_mobile;
-    uint32_t pct1 = (session_desktop * 97) / all;
-    uint32_t pct2 = (session_tablet * 97) / all;
-
-    lv_meter_set_indicator_start_value(meter2, indics[0], 0);
-    lv_meter_set_indicator_end_value(meter2, indics[0], pct1);
-
-    lv_meter_set_indicator_start_value(meter2, indics[1], pct1 + 1);
-    lv_meter_set_indicator_end_value(meter2, indics[1], pct1 + 1 + pct2);
-
-    lv_meter_set_indicator_start_value(meter2, indics[2], pct1 + 1 + pct2 + 1);
-    lv_meter_set_indicator_end_value(meter2, indics[2], 99);
-
-    lv_obj_t * card = lv_obj_get_parent(meter2);
-    lv_obj_t * label;
-
-    label = lv_obj_get_child(card, -5);
-    lv_label_set_text_fmt(label, "Desktop: %d", session_desktop);
-
-    label = lv_obj_get_child(card, -3);
-    lv_label_set_text_fmt(label, "Tablet: %d", session_tablet);
-
-    label = lv_obj_get_child(card, -1);
-    lv_label_set_text_fmt(label, "Mobile: %d", session_mobile);
-}
-
-static void meter3_anim_cb(void * var, int32_t v)
-{
-    lv_meter_set_indicator_value(meter3, var, v);
-
-    lv_obj_t * label = lv_obj_get_child(meter3, 0);
-    lv_label_set_text_fmt(label, "%d", v);
-}
