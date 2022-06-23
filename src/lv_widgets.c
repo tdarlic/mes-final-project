@@ -32,7 +32,6 @@ static void setup_create(lv_obj_t * parent);
 static lv_obj_t * create_meter_box(lv_obj_t * parent, const char * title, const char * text1, const char * text2, const char * text3);
 
 static void chart_event_cb(lv_event_t * e);
-static void shop_chart_event_cb(lv_event_t * e);
 static void meter1_indic1_anim_cb(void * var, int32_t v);
 static void meter1_indic2_anim_cb(void * var, int32_t v);
 static void meter1_indic3_anim_cb(void * var, int32_t v);
@@ -57,13 +56,7 @@ static lv_obj_t * meter3;
 lv_meter_indicator_t *indic;
 
 static lv_obj_t * chart1;
-static lv_obj_t * chart2;
-static lv_obj_t * chart3;
-
 static lv_chart_series_t * ser1;
-static lv_chart_series_t * ser2;
-static lv_chart_series_t * ser3;
-static lv_chart_series_t * ser4;
 
 static const lv_font_t * font_large;
 static const lv_font_t * font_normal;
@@ -180,8 +173,6 @@ static void pressure_create(lv_obj_t * parent)
 
 	lv_meter_scale_t * scale;
 
-	lv_anim_t a;
-
 	lv_obj_set_flex_flow(parent, LV_FLEX_FLOW_ROW_WRAP);
 
 	meter3 = create_meter_box(parent, "Pressure", "Stormy", "Rain", "Dry");
@@ -235,15 +226,6 @@ static void pressure_create(lv_obj_t * parent)
 	lv_obj_t * hpa_unit_label = lv_label_create(meter3);
 	lv_label_set_text(hpa_unit_label, "hPa");
 
-	// Set animation to demonstrate the capabilities of the device
-//	lv_anim_init(&a);
-//	lv_anim_set_values(&a, 935, 1060);
-//	lv_anim_set_repeat_count(&a, LV_ANIM_REPEAT_INFINITE);
-//	lv_anim_set_exec_cb(&a, meter3_anim_cb);
-//	lv_anim_set_var(&a, indic);
-//	lv_anim_set_time(&a, 8000);
-//	lv_anim_set_playback_time(&a, 800);
-//	lv_anim_start(&a);
 	// Set indicator to minimum pressure for start
 	lv_meter_set_indicator_value(meter3, indic, 930);
 
@@ -527,59 +509,6 @@ static void chart_event_cb(lv_event_t * e)
         }
     }
 }
-
-
-static void shop_chart_event_cb(lv_event_t * e)
-{
-    lv_event_code_t code = lv_event_get_code(e);
-    if(code == LV_EVENT_DRAW_PART_BEGIN) {
-        lv_obj_draw_part_dsc_t * dsc = lv_event_get_param(e);
-        /*Set the markers' text*/
-        if(dsc->part == LV_PART_TICKS && dsc->id == LV_CHART_AXIS_PRIMARY_X) {
-            const char * month[] = {"Jan", "Febr", "March", "Apr", "May", "Jun", "July", "Aug", "Sept", "Oct", "Nov", "Dec"};
-            lv_snprintf(dsc->text, sizeof(dsc->text), "%s", month[dsc->value]);
-        }
-        if(dsc->part == LV_PART_ITEMS) {
-            dsc->rect_dsc->bg_opa = LV_OPA_TRANSP; /*We will draw it later*/
-        }
-    }
-    if(code == LV_EVENT_DRAW_PART_END) {
-        lv_obj_draw_part_dsc_t * dsc = lv_event_get_param(e);
-        /*Add the faded area before the lines are drawn */
-        if(dsc->part == LV_PART_ITEMS) {
-            static const uint32_t devices[10] = {32, 43, 21, 56, 29, 36, 19, 25, 62, 35};
-            static const uint32_t clothes[10] = {12, 19, 23, 31, 27, 32, 32, 11, 21, 32};
-            static const uint32_t services[10] = {56, 38, 56, 13, 44, 32, 49, 64, 17, 33};
-
-            lv_draw_rect_dsc_t draw_rect_dsc;
-            lv_draw_rect_dsc_init(&draw_rect_dsc);
-
-            lv_coord_t h = lv_area_get_height(dsc->draw_area);
-
-            lv_area_t a;
-            a.x1 = dsc->draw_area->x1;
-            a.x2 = dsc->draw_area->x2;
-
-            a.y1 = dsc->draw_area->y1;
-            a.y2 = a.y1 + 4 + (devices[dsc->id] * h) / 100; /*+4 to overlap the radius*/
-            draw_rect_dsc.bg_color = lv_palette_main(LV_PALETTE_RED);
-            draw_rect_dsc.radius = 4;
-            lv_draw_rect(&a, dsc->clip_area, &draw_rect_dsc);
-
-            a.y1 = a.y2 - 4;                                    /*-4 to overlap the radius*/
-            a.y2 = a.y1 +  (clothes[dsc->id] * h) / 100;
-            draw_rect_dsc.bg_color = lv_palette_main(LV_PALETTE_BLUE);
-            draw_rect_dsc.radius = 0;
-            lv_draw_rect(&a, dsc->clip_area, &draw_rect_dsc);
-
-            a.y1 = a.y2;
-            a.y2 = a.y1 + (services[dsc->id] * h) / 100;
-            draw_rect_dsc.bg_color = lv_palette_main(LV_PALETTE_GREEN);
-            lv_draw_rect(&a, dsc->clip_area, &draw_rect_dsc);
-        }
-    }
-}
-
 
 static void meter1_indic1_anim_cb(void * var, int32_t v)
 {
