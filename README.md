@@ -46,6 +46,7 @@ Code uses the main control loop which handles the majority of the logic of the d
     - [MMA8653FC](https://www.nxp.com/design/sensor-developer-resources/sensor-sw-component-library/sensor-drivers-for-nxp-sensors:SENSOR-DRIVERS)(Licence: LA_OPT_NXP_Software_License v34 February 2022)
     - Graphics library [LVGL](https://github.com/lvgl/lv_port_stm32f429_disco)(MIT License)
     - Graphics library example code which was made to work for this board and then adjusted for the project
+    - Circular buffer [library](https://github.com/embeddedartistry/embedded-resources/tree/master/examples/c/circular_buffer) (Creative Commons License V1.0)
     - HAL (including generated code for the TFT LCD and touch controller)
     - Debug command line (Code taken from the Elicia White MES Week 5 assignment and adapted to match the requirements of the system):
         - Accelerometer test functions

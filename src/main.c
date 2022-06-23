@@ -23,6 +23,7 @@
 #include "Drivers/barometer.h"
 #include "Drivers/MMA8652/mma865x_driver.h"
 #include "Drivers/MMA8652/mma865x_regdef.h"
+#include "circular_buffer.h"
 
 UART_HandleTypeDef huart1;
 bdata_t bdata;
@@ -36,6 +37,10 @@ uint8_t orientation;
 // Accelerometer I2C driver
 mma865x_driver_t I2C;
 
+// size of the buffer holding the barometer values
+// 240 holds last 4 hours
+#define BAROMETER_BUFFER_SIZE 240
+
 static void SystemClock_Config(void);
 static void MX_USART1_UART_Init(void);
 void Error_Handler(void);
@@ -44,6 +49,10 @@ int main(void)
 {
 	uint32_t minTick;
 	uint8_t eventVal;
+	uint16_t bval;
+
+	uint8_t * buffer  = malloc(BAROMETER_BUFFER_SIZE * sizeof(uint8_t));
+	cbuf_handle_t me = circular_buf_init(buffer, BAROMETER_BUFFER_SIZE);
 
 	HAL_Init();
 
@@ -62,8 +71,6 @@ int main(void)
 		BSP_LED_Toggle(LED3);
 		HAL_Delay(50);
 	}
-
-
 
 	BSP_PB_Init(BUTTON_KEY, BUTTON_MODE_EXTI);
 	ACC_interrupt_init();
@@ -101,11 +108,15 @@ int main(void)
 		lv_task_handler();
 		ConsoleProcess();
 
+		// Sample barometer every minute
 		if (minTick < HAL_GetTick()){
 			bdata = barometer_data();
 			set_barometer_value(bdata.hpa);
 			minTick = HAL_GetTick() + (60 * 1000);
-			//@TODO: remember the barometer value for display
+			// convert float into uint16_t for storing variable into a buffer
+			// value is stored as a uint16_t integer by subtracting 900 and multiplying
+			bval = (uint16_t) ((bdata.hpa - 900)  * 100);
+			circular_buf_put(me, bval);
 		}
 
 		// if no interrupt was detected but the pin is held low then reset the interrupt in accelerometer
