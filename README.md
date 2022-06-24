@@ -117,17 +117,17 @@ Command above will clone the complete project and pull all required submodules. 
 ### 5.2 How you debugged and tested the system
 The system was debugged using ST-Link debugger that is embedded into the Disco Board. For each functionality of the board a separate test procedure was developed in command console. 
 Every feature of the system has it's own separate command that can be used to test the board. Following commands are available:
-    - ver : Get the version string
-    - gp : Check is gyro present and responding
-    - gt : Test gyro: params 10 - number of seconds to test
-    - bp : Check is barometer present and responding
-    - bd : Get barometer data: params 10 - number of seconds to test
-    - br : Reset barometer
-    - ap : Check is accelerometer present and responding
-    - ad : Get accelerometer data: params 10 - number of seconds to test
-    - ao : Get accelerometer orientation: params 10 - number of seconds to test
-    - sw : Simulate barometer warning
-    - cb : Output circular buffer
+- ver : Get the version string
+- gp : Check is gyro present and responding
+- gt : Test gyro: params 10 - number of seconds to test
+- bp : Check is barometer present and responding
+- bd : Get barometer data: params 10 - number of seconds to test
+- br : Reset barometer
+- ap : Check is accelerometer present and responding
+- ad : Get accelerometer data: params 10 - number of seconds to test
+- ao : Get accelerometer orientation: params 10 - number of seconds to test
+- sw : Simulate barometer warning
+- cb : Output circular buffer
 
 ## 6. Future
 ### What would be needed to get this project ready for production
